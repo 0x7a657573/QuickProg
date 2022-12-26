@@ -1,0 +1,6 @@
+<RCC>
+    <qresource prefix="/"/>
+    <qresource prefix="/bin">
+        <file alias="MT6261_Bootloader">files/mt6261_da.bin</file>
+    </qresource>
+</RCC>
