@@ -1,5 +1,6 @@
 #include "zprog.h"
 #include <QDebug>
+#include "mtkprog.h"
 
 zprog::zprog(QWidget *parent)
     : QWidget{parent}
@@ -12,37 +13,42 @@ zprog::zprog(QWidget *parent)
 
     Layout->addWidget(Progress);
     Layout->addWidget(log_view);
-
-
 }
 
 void zprog::SetSerialPort(const QString PortName)
 {
-    SerialPort.setPortName(PortName);
+    xPortName = PortName;
+
 }
 
 void zprog::start(void)
 {
-    QThread *thread1 = QThread::create(std::bind(&zprog::DoPrograming,this));
-    thread1->start();
+    QThread *thread;
+    mtkprog *mtkworker;
+
+    thread = new QThread();
+    mtkworker = new mtkprog(xPortName);
+    mtkworker->moveToThread(thread);
+
+    connect(mtkworker, &mtkprog::progress,this , &zprog::setProgress);
+    connect(mtkworker, &mtkprog::wlog,this , &zprog::writelog);
+
+    //connect( worker, &mtkprog::error, this, &zprog::errorString);
+    connect( thread, &QThread::started, mtkworker, &mtkprog::Start);
+    connect( mtkworker, &mtkprog::finished, thread, &QThread::quit);
+    connect( mtkworker, &mtkprog::finished, mtkworker, &mtkprog::deleteLater);
+    connect( thread, &QThread::finished, thread, &QThread::deleteLater);
+    thread->start();
+}
+
+void zprog::writelog(QString str)
+{
+    log_view->appendPlainText(str);
 }
 
 void zprog::setProgress(int value)
 {
    Progress->setValue(value);
-}
-
-void zprog::DoPrograming(void)
-{
-    SerialPort.open(QIODeviceBase::ReadWrite);
-    for(int i=0;i<=100;i++)
-    {
-        emit setProgress(i);
-        SerialPort.write("Salam\r\n");
-        //qDebug() << "Start This Thred" << ;
-        QThread::msleep(50);
-    }
-    SerialPort.close();
 }
 
 

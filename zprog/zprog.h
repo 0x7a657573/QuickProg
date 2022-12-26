@@ -18,17 +18,19 @@ public:
     void start(void);
 
 signals:
-
+    void operate(const QString &);
 
 private slots:
     void setProgress(int value);
+    void writelog(QString str);
 
 private:
     void log();
     void DoPrograming(void);
 protected:
 
-    QSerialPort SerialPort;
+    QString xPortName;
+
     /*Layouts*/
     QVBoxLayout *Layout;
 
