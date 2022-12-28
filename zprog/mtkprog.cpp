@@ -2,12 +2,34 @@
 #include <QDebug>
 #include <QThread>
 #include <QElapsedTimer>
+#include <QFile>
+
+DA_t MT6261_DA[] =
+{
+    {.offset = 0x00000, .size=0x00718, .address=0x70007000},
+    {.offset = 0x00718, .size=0x1e5c8, .address=0x10020000}
+};
 
 mtkprog::mtkprog(QString PortName)
 {
     xPort_PortName = PortName;
     xPort = nullptr;
-    ReadTimeout = 100;
+    ReadTimeout = 200;
+}
+
+void mtkprog::setup_progress(uint32_t max)
+{
+    max_pg = max;
+    cur_pg = 0;
+    emit progress(0);
+}
+
+void mtkprog::update_progress(uint32_t val)
+{
+    cur_pg += val;
+    float p = cur_pg * 100;
+    p /= max_pg;
+    emit progress(p);
 }
 
 bool mtkprog::open(void)
@@ -44,19 +66,22 @@ QByteArray mtkprog::send(QByteArray &data,uint32_t sz)
     if(data.size())
     {
         xPort->write(data);
-        xPort->waitForBytesWritten(100);
+        xPort->waitForBytesWritten(500);
     }
     QByteArray rbyte;
     rbyte.clear();
     if(sz)
     {
-        uint32_t Try = ReadTimeout;
+        int32_t Try = ReadTimeout;
         while(sz - rbyte.size() && Try--)
         {
             xPort->waitForReadyRead(10);
             rbyte += xPort->read(sz - rbyte.size());
             //qDebug() << "WeRead " << rbyte.size() << "wait for" << sz - rbyte.size() << "byte";
         }
+        if(Try<=0)
+            qDebug() << "Wait TimeOut !";
+
         //qDebug() << "send R" << sz << rbyte.toHex(',');
     }
     return rbyte;
@@ -178,6 +203,21 @@ bool mtkprog::da_write32(uint32_t addr,uint32_t val)
     return true;
 }
 
+bool mtkprog::loadBootLoader(QString fname)
+{
+    DaFile.clear();
+    QFile f(fname);
+    if(!f.open(QIODevice::ReadOnly))
+    {
+        //qDebug()<<"filenot opened";
+        return false;
+    }
+
+    DaFile = f.readAll();
+    f.close();
+    //qDebug() << "DA read " << DaFile.size() << "bytes";
+    return true;
+}
 
 bool mtkprog::connect(uint32_t timeout)
 {
@@ -245,7 +285,7 @@ bool mtkprog::connect(uint32_t timeout)
 
     if(Core.CPU_ID == 0x6261)
     {
-        loadBootLoader = "mt6261_da.bin";
+        loadBootLoader(":/bin/MT6261_Bootloader");
     }
     else
     {
@@ -256,15 +296,173 @@ bool mtkprog::connect(uint32_t timeout)
     return true;
 }
 
+QByteArray mtkprog::get_da(uint32_t offset,uint32_t size)
+{
+    QByteArray Select = DaFile.mid(offset,size);
+    return Select;
+}
+
+bool mtkprog::da_send_da(uint32_t address,uint32_t size,QByteArray &data,uint32_t block)
+{
+    QByteArray dCmd;
+    dCmd.append(CMD_SEND_DA);
+    dCmd.append((uint8_t)((address >> 24) & 0xFF));
+    dCmd.append((uint8_t)((address >> 16) & 0xFF));
+    dCmd.append((uint8_t)((address >> 8) & 0xFF));
+    dCmd.append((uint8_t)((address)&0xFF));
+    dCmd.append((uint8_t)((size >> 24) & 0xFF));
+    dCmd.append((uint8_t)((size >> 16) & 0xFF));
+    dCmd.append((uint8_t)((size >> 8) & 0xFF));
+    dCmd.append((uint8_t)((size)&0xFF));
+    dCmd.append((uint8_t)((block >> 24) & 0xFF));
+    dCmd.append((uint8_t)((block >> 16) & 0xFF));
+    dCmd.append((uint8_t)((block >> 8) & 0xFF));
+    dCmd.append((uint8_t)((block)&0xFF));
+    QByteArray res = cmd(dCmd, 2);
+
+    if(res.indexOf(QByteArray("\x00\x00"))!=0 || res.size()!=2 )
+    {
+        emit wlog(QString("sDA Can not set Adr %1").arg(QString::number(address,16)));
+        return false;
+    }
+
+    QByteArray NullCMD;
+    while(data.size())
+    {
+        QByteArray send = data.mid(0,block);
+        xPort->write(send);
+        xPort->waitForBytesWritten(500);
+        data = data.mid(block,-1);
+        update_progress(send.size());
+
+    }
+    res = cmd(NullCMD,4); //checksum
+
+    return true;
+}
+
+bool mtkprog::sendFlashInfo(uint32_t offset)
+{
+    QByteArray NullP;
+    for(int i=0;i<512;i++)
+    {
+        QByteArray data = get_da(offset, 36);
+        QByteArray check  = data.mid(0,4);
+        if(check == QByteArray("\xFF\xFF\0\0"))
+        {
+            emit wlog(QString("Invalid flash info: %1").arg(data.mid(0,4).toHex(',')));
+            return false;
+        }
+        offset += 36;
+        QByteArray r = send(data, 1);
+
+        if (r[0] == ACK)
+        {
+            r = cmd(NullP, 2);
+            if(r.indexOf(QByteArray("\xA5\x69"))!=0 || r.size()!=2 )
+            {
+                emit wlog(QString("Flashinfo END: %1").arg(r.toHex(',')));
+                return false;
+            }
+            return true;
+        }
+        if(r[0] != CONF)
+        {
+            emit wlog(QString("Flashinfo ACK Fail: %1").arg(r.toHex(',')));
+            return false;
+        }
+    }
+    return true;
+}
+
+bool mtkprog::da_start(void)
+{
+    emit wlog(QString("Load BootLoader"));
+
+    setup_progress((uint32_t)(MT6261_DA[0].size + MT6261_DA[1].size));
+
+    // SEND_DA_1
+    uint32_t offset = MT6261_DA[0].offset;
+    uint32_t size = MT6261_DA[0].size;
+    uint32_t addr1 = MT6261_DA[0].address;
+    QByteArray data = get_da(offset, size);
+    emit wlog(QString("Upload DA Part 1 size %1").arg(size));
+    da_send_da(addr1, size, data, 0x400);  // <--chs = D5AF.0000
+
+    // SEND_DA_2
+    offset = MT6261_DA[1].offset;
+    size = MT6261_DA[1].size;
+    uint32_t addr2 = MT6261_DA[1].address;
+    data = get_da(offset, size);
+    emit wlog(QString("Upload DA Part 2 size %1").arg(size));
+    da_send_da(addr2, size, data, 0x800);  // <--chs = E423.0000
+
+    offset += size;
+    // CMD_JUMP_DA
+    QByteArray Jd;
+    Jd.append(CMD_JUMP_DA);
+    Jd.append((uint8_t)((addr1 >> 24) & 0xFF));
+    Jd.append((uint8_t)((addr1 >> 16) & 0xFF));
+    Jd.append((uint8_t)((addr1 >> 8) & 0xFF));
+    Jd.append((uint8_t)(addr1 & 0xFF));
+    emit wlog(QString("Jump to DA offset 0x%1").arg(QString::number(addr1,16)));
+    QByteArray jres = cmd(Jd, 2);
+    if(jres.indexOf(QByteArray("\x00\x00"))!=0 || jres.size()!=2 )
+    {
+        emit wlog(QString("Err: Can not Jump To DA"));
+        return false;
+    }
+
+    Jd.clear();
+    // <-- C003028E DA_INFO: 0xC0 , Ver : 3.2 , BBID : 0x8E
+    jres = cmd(Jd, 4);
+    const uint8_t cf[] = {0xA5,0x05,0xFE,0x00,0x08,0x00,0x70,0x07,0xFF,0xFF,0x02,0x00,0x00,0x01,0x08};
+    QByteArray f;
+    for(unsigned int i=0;i<sizeof(cf);i++)
+        f.append(cf[i]);
+    QByteArray r = send(f, 1);
+    if(r[0]!=ACK)
+    {
+        return false;
+    }
+
+    // FLASH ID INFOS
+    emit wlog(QString("send flash info..."));
+    if(!sendFlashInfo(offset))
+    {
+        emit wlog(QString("Flash info Error."));
+        return false;
+    }
+    emit wlog(QString("Flash info OK."));
+
+    QByteArray Setting;
+    Setting.append((uint8_t)0);
+    Setting.append((uint8_t)0);
+    Setting.append((uint8_t)0);
+    Setting.append((uint8_t)0);
+    r = send(Setting, 256);  // EMI_SETTINGS ??
+//    qDebug() << r.size() << r.toHex().toUpper();
+//    if(r.size()!=256)
+//    {
+//        emit wlog(QString("Error EMI SETTINGS"));
+//        return false;
+//    }
+    emit wlog(QString("Bootloadr Load ok."));
+    return true;
+}
+
 void mtkprog::Start(void)
 {
     xPort = new QSerialPort(xPort_PortName);
+
     if(!open())
     {
         emit wlog(QString("Can not open Port {%1}").arg(xPort_PortName));
         die();
         return;
     }
+    emit wlog(QString("Open Port {%1}").arg(xPort_PortName));
+
     if(!connect())
     {
         emit wlog(QString("Can not Connect to device!"));
@@ -272,12 +470,13 @@ void mtkprog::Start(void)
         return;
     }
 
-    for(int i=0;i<101;i++)
+    if(!da_start())
     {
-        xPort->write("Fuck You");
-        emit progress(i);
-        QThread::msleep(50);
+        emit wlog(QString("Can not upload bootloader!"));
+        die();
+        return;
     }
+
 
     die();
 }

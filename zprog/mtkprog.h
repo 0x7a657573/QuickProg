@@ -15,7 +15,18 @@
 #define CMD_SEND_DA 0xD7
 #define CMD_SEND_EPP 0xD9
 /*end cmd general define--------------------------*/
+#define CONF 0x69
+#define STOP 0x96
+#define ACK 0x5A
+#define NACK 0xA5
 
+
+typedef struct
+{
+    uint32_t offset;
+    uint32_t size;
+    uint32_t address;
+}DA_t;
 
 
 class mtkprog : public QObject
@@ -47,7 +58,11 @@ signals:
 private:
     QString xPort_PortName;
     QSerialPort *xPort;
-    QString loadBootLoader;
+    QByteArray DaFile;
+    uint32_t max_pg;
+    uint32_t cur_pg;
+    void setup_progress(uint32_t max);
+    void update_progress(uint32_t val);
 
  protected:
     uint32_t ReadTimeout;
@@ -58,7 +73,13 @@ private:
     uint16_t da_read_16(uint32_t addr,uint32_t sz=1);
     bool da_write16(uint32_t addr,uint16_t val);
     bool da_write32(uint32_t addr,uint32_t val);
+    bool loadBootLoader(QString fname);
+    QByteArray get_da(uint32_t offset,uint32_t size);
+    bool da_send_da(uint32_t address,uint32_t size,QByteArray &data,uint32_t block=4096);
+    bool sendFlashInfo(uint32_t offset);
+
     bool connect(uint32_t timeout=30);
+    bool da_start(void);
 };
 
 #endif // MTKPROG_H
