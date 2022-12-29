@@ -15,6 +15,7 @@ mtkprog::mtkprog(QString PortName)
     xPort_PortName = PortName;
     xPort = nullptr;
     ReadTimeout = 200;
+    BaudRate = UART_BAUD_460800;
 }
 
 void mtkprog::setup_progress(uint32_t max)
@@ -451,6 +452,83 @@ bool mtkprog::da_start(void)
     return true;
 }
 
+
+bool mtkprog::da_changebaud(mtk_baud baud)
+{
+    uint32_t cBaud[] = {460800, 921600, 460800, 230400, 115200};
+    if(baud==UART_BAUD_115200)
+    {
+        return true;
+    }
+
+    emit wlog(QString("Set Baud rate to %1").arg(cBaud[baud%5]));
+    QByteArray sbaud;
+    sbaud.append(DA_SPEED);
+    sbaud.append((uint8_t)baud);
+    sbaud.append(0x01);
+    QByteArray r = send(sbaud,1);
+    if(r[0] != ACK)
+    {
+        emit wlog(QString("Error set Baud rate!"));
+        return false;
+    }
+
+    /*send ack*/
+    QByteArray sACK;
+    sACK.append(ACK);
+    send(sACK);
+
+    /*now change baud*/
+
+    if(!xPort->setBaudRate(cBaud[baud%5]))
+    {
+        emit wlog(QString("Error to set Baud rate!"));
+        return false;
+    }
+    QThread::msleep(200);
+
+    /*try sync with module*/
+    QByteArray sync;
+    sync.append((uint8_t)DA_SYNC);
+    for(int i=0;i<10;i++)
+    {
+        r = send(sync,1);
+        if(r[0]==sync[0])
+        {
+            break;
+        }
+        QThread::msleep(200);
+    }
+    if(r[0]!=sync[0])
+    {
+        emit wlog(QString("Error to Sync with module"));
+        return false;
+    }
+
+    r = send(sACK,1);
+    if(r[0]!=ACK)
+    {
+        emit wlog(QString("module don't ACK Afer Change baud"));
+        return false;
+    }
+
+    sync.clear();
+    sync.append((uint8_t)0);
+    for(int i=0;i<256;i++)
+    {
+        sync[0] = (uint8_t)i;
+        r=send(sync,1);
+        if(r[0]!=sync[0])
+        {
+            emit wlog(QString("Error in sync loop"));
+            return false;
+        }
+    }
+
+    emit wlog(QString("Set Baud OK."));
+    return true;
+}
+
 void mtkprog::Start(void)
 {
     xPort = new QSerialPort(xPort_PortName);
@@ -477,6 +555,12 @@ void mtkprog::Start(void)
         return;
     }
 
+    if(!da_changebaud(BaudRate))
+    {
+        emit wlog(QString("Can not set baud reate"));
+        die();
+        return;
+    }
 
     die();
 }

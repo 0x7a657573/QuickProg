@@ -4,6 +4,26 @@
 #include <QString>
 #include <QSerialPort>
 
+/*DA define-----------------------------------*/
+#define DA_SYNC 0xC0
+#define DA_FORMAT_FAT 0xB8
+#define DA_CONFIG_EMI 0xD0
+#define DA_POST_PROCESS 0xD1
+#define DA_SPEED 0xD2
+#define DA_MEM 0xD3
+#define DA_FORMAT 0xD4
+#define DA_WRITE 0xD5
+#define DA_READ 0xD6
+#define DA_WRITE_REG16 0xD7
+#define DA_READ_REG16 0xD8
+#define DA_FINISH 0xD9
+#define DA_GET_DSP_VER 0xDA
+#define DA_ENABLE_WATCHDOG 0xDB
+#define DA_NFB_WRITE_BLOADER 0xDC
+#define DA_NAND_IMAGE_LIST 0xDD
+#define DA_NFB_WRITE_IMAGE 0xDE
+#define DA_NAND_READPAGE 0xDF
+/*end DA define-----------------------------------*/
 
 /*cmd general define--------------------------*/
 #define CMD_READ_16 0xA2
@@ -46,6 +66,13 @@ public:
     }cpu_t;
     cpu_t Core;
 
+    typedef enum {
+        UART_BAUD_921600=0x01,
+        UART_BAUD_460800=0x02,
+        UART_BAUD_230400=0x03,
+        UART_BAUD_115200=0x04,
+    }mtk_baud;
+
 public slots:
     void Start(void);
 
@@ -65,6 +92,7 @@ private:
     void update_progress(uint32_t val);
 
  protected:
+    mtk_baud BaudRate;
     uint32_t ReadTimeout;
     void die(void);
     bool open(void);
@@ -77,6 +105,7 @@ private:
     QByteArray get_da(uint32_t offset,uint32_t size);
     bool da_send_da(uint32_t address,uint32_t size,QByteArray &data,uint32_t block=4096);
     bool sendFlashInfo(uint32_t offset);
+    bool da_changebaud(mtk_baud baud=UART_BAUD_460800);
 
     bool connect(uint32_t timeout=30);
     bool da_start(void);
