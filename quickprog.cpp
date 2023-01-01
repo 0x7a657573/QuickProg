@@ -4,6 +4,7 @@
 #include <QHBoxLayout>
 #include <QPushButton>
 #include <QSpacerItem>
+#include <QFileDialog>
 
 QuickProg::QuickProg(QWidget *parent)
     : QMainWindow(parent)
@@ -17,8 +18,6 @@ QuickProg::QuickProg(QWidget *parent)
 
 
     programmer = new zprog(this);
-
-
 
     main_lay->addLayout(Toolbarlay);
     main_lay->addWidget(programmer);
@@ -66,15 +65,39 @@ void QuickProg::LoadToolBar(QHBoxLayout *lay)
     btnStart->setText(tr("Start"));
     connect(btnStart,SIGNAL(clicked()),this,SLOT(handel_StartAction()));
 
+    /*browse btn*/
+    QPushButton *btnBrowse = new QPushButton(this);
+    btnBrowse->setAutoFillBackground(true);
+    //btnBrowse->setFixedSize(30,30);
+    btnBrowse->setToolTip(tr("Select firmware"));
+    btnBrowse->setText(tr("Browse"));
+    connect(btnBrowse,SIGNAL(clicked()),this,SLOT(handel_BrowseFile()));
+
+    LPath = new QLineEdit(this);
+    LPath->setReadOnly(true);
+    LPath->setMinimumSize(150,30);
+
     QSpacerItem *SendSpitem = new QSpacerItem(10,0, QSizePolicy::Fixed, QSizePolicy::Minimum);
 
     lay->addWidget(xPort);
     lay->addWidget(xBaud);
+    lay->addWidget(LPath);
+    lay->addWidget(btnBrowse);
     lay->addSpacerItem(SendSpitem);
     lay->addWidget(btnStart);
 
     /*load serial port*/
     handel_LoadSerialPort();
+}
+
+void QuickProg::handel_BrowseFile()
+{
+    QString fileName = QFileDialog::getOpenFileName(this, tr("Open File"));
+    if(fileName != "")
+    {
+        LPath->setText(fileName);
+        programmer->SetfirmwarePath(fileName);
+    }
 }
 
 void QuickProg::handel_StartAction()

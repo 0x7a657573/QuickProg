@@ -10,8 +10,9 @@ DA_t MT6261_DA[] =
     {.offset = 0x00718, .size=0x1e5c8, .address=0x10020000}
 };
 
-mtkprog::mtkprog(QString PortName)
+mtkprog::mtkprog(QString PortName,QString firmware)
 {
+    xFirmware_Path = firmware;
     xPort_PortName = PortName;
     xPort = nullptr;
     ReadTimeout = 200;
@@ -452,7 +453,6 @@ bool mtkprog::da_start(void)
     return true;
 }
 
-
 bool mtkprog::da_changebaud(mtk_baud baud)
 {
     uint32_t cBaud[] = {460800, 921600, 460800, 230400, 115200};
@@ -529,8 +529,48 @@ bool mtkprog::da_changebaud(mtk_baud baud)
     return true;
 }
 
+bool mtkprog::loadfirmware()
+{
+    Dafirmware.clear();
+    QFile f(xFirmware_Path);
+    if(!f.open(QIODevice::ReadOnly))
+    {
+
+        return false;
+    }
+
+    Dafirmware = f.readAll();
+    f.close();
+    emit wlog(QString("Firmware size %1 Byte").arg(Dafirmware.size()));
+    return true;
+}
+
+bool mtkprog::uploadApplication()
+{
+    //self.da_mem(self.app_address, self.app_size, self.app_type, len(self.firmware))
+    return true;
+}
+
+
+
 void mtkprog::Start(void)
 {
+    /*check firmware*/
+    if(xFirmware_Path == "")
+    {
+        emit wlog(QString("Please select firmware!"));
+        die();
+        return;
+    }
+
+    /*try load firmware*/
+    if(!loadfirmware())
+    {
+        emit wlog(QString("can not load firmware : %1").arg(xFirmware_Path));
+        die();
+        return;
+    }
+
     xPort = new QSerialPort(xPort_PortName);
 
     if(!open())
@@ -558,6 +598,13 @@ void mtkprog::Start(void)
     if(!da_changebaud(BaudRate))
     {
         emit wlog(QString("Can not set baud reate"));
+        die();
+        return;
+    }
+
+    if(!uploadApplication())
+    {
+        emit wlog(QString("Can not Upload Fremware"));
         die();
         return;
     }

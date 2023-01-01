@@ -15,6 +15,7 @@ class zprog : public QWidget
 public:
     explicit zprog(QWidget *parent = nullptr);
     void SetSerialPort(const QString PortName);
+    void SetfirmwarePath(const QString firmwarePath);
     void start(void);
 
 signals:
@@ -29,6 +30,7 @@ private:
     void DoPrograming(void);
 protected:
 
+    QString xFirmwarePath;
     QString xPortName;
 
     /*Layouts*/

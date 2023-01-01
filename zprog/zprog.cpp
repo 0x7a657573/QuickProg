@@ -18,7 +18,11 @@ zprog::zprog(QWidget *parent)
 void zprog::SetSerialPort(const QString PortName)
 {
     xPortName = PortName;
+}
 
+void zprog::SetfirmwarePath(const QString firmwarePath)
+{
+    xFirmwarePath = firmwarePath;
 }
 
 void zprog::start(void)
@@ -27,7 +31,7 @@ void zprog::start(void)
     mtkprog *mtkworker;
 
     thread = new QThread();
-    mtkworker = new mtkprog(xPortName);
+    mtkworker = new mtkprog(xPortName,xFirmwarePath);
     mtkworker->moveToThread(thread);
 
     connect(mtkworker, &mtkprog::progress,this , &zprog::setProgress);

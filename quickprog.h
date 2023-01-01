@@ -7,6 +7,7 @@
 #include <QComboBox>
 #include <QSerialPortInfo>
 #include <QSerialPort>
+#include <QLineEdit>
 #include <zprog/zprog.h>
 
 QT_BEGIN_NAMESPACE
@@ -24,11 +25,12 @@ public:
 private slots:
     void handel_LoadSerialPort();
     void handel_StartAction();
+    void handel_BrowseFile();
 
 private:
     QComboBox *xPort;
     QComboBox *xBaud;
-
+    QLineEdit *LPath;
     Ui::QuickProg *ui;
     void LoadToolBar(QHBoxLayout *lay);
 

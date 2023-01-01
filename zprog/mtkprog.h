@@ -54,7 +54,7 @@ class mtkprog : public QObject
     Q_OBJECT
 
 public:
-    mtkprog(QString PortName);
+    mtkprog(QString PortName,QString firmware);
 
     /*type*/
     typedef struct
@@ -84,8 +84,11 @@ signals:
 
 private:
     QString xPort_PortName;
+    QString xFirmware_Path;
+
     QSerialPort *xPort;
     QByteArray DaFile;
+    QByteArray Dafirmware;
     uint32_t max_pg;
     uint32_t cur_pg;
     void setup_progress(uint32_t max);
@@ -106,6 +109,8 @@ private:
     bool da_send_da(uint32_t address,uint32_t size,QByteArray &data,uint32_t block=4096);
     bool sendFlashInfo(uint32_t offset);
     bool da_changebaud(mtk_baud baud=UART_BAUD_460800);
+    bool uploadApplication();
+    bool loadfirmware();
 
     bool connect(uint32_t timeout=30);
     bool da_start(void);
