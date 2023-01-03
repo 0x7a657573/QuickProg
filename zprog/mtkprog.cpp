@@ -3,6 +3,7 @@
 #include <QThread>
 #include <QElapsedTimer>
 #include <QFile>
+#include <QtEndian>
 
 DA_t MT6261_DA[] =
 {
@@ -31,6 +32,9 @@ void mtkprog::update_progress(uint32_t val)
     cur_pg += val;
     float p = cur_pg * 100;
     p /= max_pg;
+    //qDebug() << p << cur_pg << max_pg;
+    if(p>100.0f)
+        p = 100;
     emit progress(p);
 }
 
@@ -531,27 +535,295 @@ bool mtkprog::da_changebaud(mtk_baud baud)
 
 bool mtkprog::loadfirmware()
 {
-    Dafirmware.clear();
+    xFirmware.data.clear();
+
     QFile f(xFirmware_Path);
     if(!f.open(QIODevice::ReadOnly))
     {
-
         return false;
     }
 
-    Dafirmware = f.readAll();
+    xFirmware.data = f.readAll();
     f.close();
-    emit wlog(QString("Firmware size %1 Byte").arg(Dafirmware.size()));
+
+    xFirmware.type = qFromLittleEndian<quint16>(xFirmware.data.mid(0x18,2));
+    xFirmware.address = qFromLittleEndian<quint32>(xFirmware.data.mid(0x1C,4));
+    xFirmware.Size = qFromLittleEndian<quint32>(xFirmware.data.mid(0x1C+4,4));
+
+    if(xFirmware.data.length() != xFirmware.Size)
+    {
+        emit wlog("firmware Size mismatch");
+        return false;
+    }
+    if(xFirmware.data.length() < 0x40)
+    {
+        emit wlog("firmware Invalid size.");
+        return false;
+    }
+
+    /*check firmware*/
+    QByteArray cHeader("MMM");
+    QByteArray cInfo("FILE_INFO");
+
+    if(xFirmware.data.mid(0,3) != cHeader)
+    {
+        emit wlog("firmware Invalid header 'MMM' expected.");
+        return false;
+    }
+
+    if(xFirmware.data.mid(8,9) != cInfo)
+    {
+        emit wlog("firmware Invalid header 'FILE_INFO' expected.");
+        return false;
+    }
+
+    emit wlog(QString("Firmware size %1 KByte").arg(xFirmware.data.size()/1024));
+    return true;
+}
+
+bool mtkprog::da_mem(uint32_t address, uint32_t size,uint16_t  ftype,uint8_t file_count,uint8_t fota)
+{
+    emit wlog("da memory Format");
+
+    QByteArray sendtemp;
+    sendtemp.append((uint8_t)DA_MEM);
+    sendtemp.append((uint8_t)fota);
+    sendtemp.append((uint8_t)file_count);
+    send(sendtemp, 0);
+
+    uint32_t start_address = (address & 0x07FFFFFF);
+    uint32_t end_address = start_address + size - 1;
+
+    sendtemp.clear();
+    sendtemp.append((uint8_t)((start_address >> 24) & 0xFF));
+    sendtemp.append((uint8_t)((start_address >> 16) & 0xFF));
+    sendtemp.append((uint8_t)((start_address >> 8) & 0xFF));
+    sendtemp.append((uint8_t)((start_address)&0xFF));
+    sendtemp.append((uint8_t)((end_address >> 24) & 0xFF));
+    sendtemp.append((uint8_t)((end_address >> 16) & 0xFF));
+    sendtemp.append((uint8_t)((end_address >> 8) & 0xFF));
+    sendtemp.append((uint8_t)((end_address)&0xFF));
+    sendtemp.append((uint8_t)(((uint32_t)size >> 24) & 0xFF));
+    sendtemp.append((uint8_t)(((uint32_t)size >> 16) & 0xFF));
+    sendtemp.append((uint8_t)(((uint32_t)size >> 8) & 0xFF));
+    sendtemp.append((uint8_t)(((uint32_t)size) & 0xFF));
+    QByteArray res = send(sendtemp,1);
+    if(res.length()!=1 && res[0]!=ACK)
+    {
+        emit wlog("DA_MEM ACK");
+        return false;
+    }
+
+    sendtemp.clear();
+    res = send(sendtemp, 2); //filecount + ACK
+    if(res[0] != file_count)
+    {
+        emit wlog("File count does not match");
+        return false;
+    }
+
+    res = send(sendtemp, 4); // Format Ack Count for each file
+
+    uint32_t format_ack_cnt = qFromBigEndian<quint32>(res);
+
+    for (uint32_t i = 0; i < format_ack_cnt; i++)
+    {
+        res = send(sendtemp, 1);
+        if (res[0] != ACK)
+        {
+            emit wlog("Error memory Format Failed");
+            return false;
+        }
+
+    }
+
+    res = send(sendtemp, 1);
+    if (res[0] != ACK)
+    {
+        emit wlog("Error memory Format Failed");
+        return false;
+    }
+
+    emit wlog("memory Formated");
+    return true;
+}
+
+bool mtkprog::da_write(uint32_t block)
+{
+
+    QByteArray sendtemp;
+    sendtemp.append((uint8_t)DA_WRITE);
+    QByteArray res = send(sendtemp, 1);
+    if(res[0] != ACK)
+    {
+        emit wlog("DA_WRITE ACK");
+        return false;
+    }
+
+    // Sequential Erase (0x1). (0x0) for Best-Effort Erase, packet_length
+    sendtemp.clear();
+    sendtemp.append((uint8_t)0);
+    sendtemp.append((uint8_t)((block >> 24) & 0xFF));
+    sendtemp.append((uint8_t)((block >> 16) & 0xFF));
+    sendtemp.append((uint8_t)((block >> 8) & 0xFF));
+    sendtemp.append((uint8_t)((block)&0xFF));
+
+    res = send(sendtemp, 2);
+    if(!(res[0]==ACK && res[1]==ACK))
+    {
+        emit wlog("DA_WRITE Faild");
+        return false;
+    }
+
+    emit wlog("da write ok");
+    return true;
+}
+
+uint16_t mtkprog::crc_word(QByteArray data)
+{
+    uint32_t ch = 0;
+    for (uint32_t i = 0; i < data.length(); i++)
+    {
+        ch += data[i] & 0xFF;
+    }
+    ch = ch & 0xFFFF;
+    return ch;
+}
+
+bool mtkprog::da_write_data(QByteArray &fw_data,uint32_t block)
+{
+    setup_progress(fw_data.length());
+    QByteArray data = fw_data;
+    uint16_t cw = 0;
+    while (data.length())
+    {
+        QByteArray xsend;
+        xsend.append(ACK);
+        xsend.append(data.mid(0,block));
+        xPort->write(xsend);
+        uint16_t crc = crc_word(data.mid(0,block));
+        xPort->waitForBytesWritten();
+
+        xsend.clear();
+        xsend.append((uint8_t)((crc >> 8) & 0xFF));
+        xsend.append((uint8_t)((crc)&0xFF));
+        QByteArray ret = send(xsend, 1);
+        if (ret[0] == CONF)
+        {
+            update_progress(block);
+            cw += crc;
+            data = data.mid(block,-1);
+        }
+        else if((uint8_t)ret[0] == (uint8_t)NACK)
+        {
+            qDebug() << "fuck";
+            QElapsedTimer elapsed_timer;
+            elapsed_timer.start();
+            QByteArray empty;
+            while(1)
+            {
+                QByteArray r = send(empty, 1);
+                if (r[0] == ACK)
+                {
+                    empty.append(CONF);
+                    xPort->write(empty);
+                    xPort->waitForBytesWritten();
+                    break;
+                }
+
+                if (elapsed_timer.elapsed() > 60*1000)
+                {
+                    emit wlog(tr("Firmware Data write timeout :("));
+                    return false;
+                }
+            }
+        }
+        else
+        {
+            emit wlog(tr("Firmware fail"));
+            return false;
+        }
+    }
+
+    QElapsedTimer elapsed_timer;
+    QByteArray empty;
+    empty.clear();
+    elapsed_timer.start();
+    uint32_t ack_count = 0;
+    while(1)
+    {
+        QByteArray r = send(empty, 1);
+        if (r[0] == ACK)
+        {
+            ack_count += 1;
+            if(ack_count == 3)
+                break;
+        }
+
+        if (elapsed_timer.elapsed() > 10*1000)
+        {
+            emit wlog(tr("Firmware Write Error"));
+            return false;
+        }
+    }
+
+    QByteArray checkcrc;
+    checkcrc.append((uint8_t)((cw >> 8) & 0xFF));
+    checkcrc.append((uint8_t)(cw & 0xFF));
+    QByteArray r = send(checkcrc, 1);
+    if (r[0] != ACK)
+    {
+        emit wlog("Firmware write ack failed");
+        return false;
+    }
+
+    emit wlog("Firmware write ok.");
     return true;
 }
 
 bool mtkprog::uploadApplication()
 {
-    //self.da_mem(self.app_address, self.app_size, self.app_type, len(self.firmware))
+    if(!da_mem(xFirmware.address, xFirmware.Size, xFirmware.type))
+    {
+        return false;
+    }
+
+    if(!da_write())
+    {
+        return false;
+    }
+
+    if(!da_write_data(xFirmware.data))
+    {
+        return false;
+    }
+
     return true;
 }
 
+bool mtkprog::da_reset()
+{
+    QByteArray xSend;
+    xSend.append((uint8_t)DA_CLEAR_POWERKEY_IN_META_MODE_CMD);
+    QByteArray r = send(xSend, 1);  // <-- 5A
 
+    xSend.clear();
+    xSend.append((uint8_t)0xC9);
+    xSend.append((uint8_t)0x00);
+    r = send(xSend, 1);  // ???<-- 5A
+
+    xSend.clear();
+    xSend.append((uint8_t)DA_ENABLE_WATCHDOG_CMD);
+    xSend.append((uint8_t)0x01);
+    xSend.append((uint8_t)0x40);
+    xSend.append((uint8_t)0x00);
+    xSend.append((uint8_t)0x00);
+    xSend.append((uint8_t)0x00);
+    xSend.append((uint8_t)0x00);
+    r = send(xSend, 1);  // <-- 5A, RESET
+    emit wlog("Reset Ok");
+    return true;
+}
 
 void mtkprog::Start(void)
 {
@@ -609,5 +881,13 @@ void mtkprog::Start(void)
         return;
     }
 
+    if(!da_reset())
+    {
+        emit wlog(QString("reset faild"));
+        die();
+        return;
+    }
+
+    emit wlog("firmware upload ok");
     die();
 }

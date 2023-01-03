@@ -23,6 +23,8 @@
 #define DA_NAND_IMAGE_LIST 0xDD
 #define DA_NFB_WRITE_IMAGE 0xDE
 #define DA_NAND_READPAGE 0xDF
+#define DA_CLEAR_POWERKEY_IN_META_MODE_CMD 0xB9
+#define DA_ENABLE_WATCHDOG_CMD  0xDB
 /*end DA define-----------------------------------*/
 
 /*cmd general define--------------------------*/
@@ -73,6 +75,15 @@ public:
         UART_BAUD_115200=0x04,
     }mtk_baud;
 
+    /*Firmware info*/
+    typedef struct
+    {
+        uint16_t type;
+        uint32_t address;
+        uint32_t Size;
+        QByteArray data;
+    }Firmware_t;
+
 public slots:
     void Start(void);
 
@@ -83,12 +94,12 @@ signals:
     void error(QString err);
 
 private:
-    QString xPort_PortName;
-    QString xFirmware_Path;
+    QString     xPort_PortName;
+    QString     xFirmware_Path;
+    Firmware_t  xFirmware;
 
     QSerialPort *xPort;
     QByteArray DaFile;
-    QByteArray Dafirmware;
     uint32_t max_pg;
     uint32_t cur_pg;
     void setup_progress(uint32_t max);
@@ -111,6 +122,11 @@ private:
     bool da_changebaud(mtk_baud baud=UART_BAUD_460800);
     bool uploadApplication();
     bool loadfirmware();
+    uint16_t crc_word(QByteArray data);
+    bool da_mem(uint32_t address, uint32_t size,uint16_t  ftype,uint8_t file_count=1,uint8_t fota=NACK);
+    bool da_write(uint32_t block=4096);
+    bool da_write_data(QByteArray &fw_data,uint32_t block=4096);
+    bool da_reset();
 
     bool connect(uint32_t timeout=30);
     bool da_start(void);
