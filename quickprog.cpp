@@ -60,22 +60,30 @@ void QuickProg::LoadToolBar(QHBoxLayout *lay)
     /*start btn*/
     QPushButton *btnStart = new QPushButton(this);
     btnStart->setAutoFillBackground(true);
-    //btnStart->setFixedSize(30,30);
+    btnStart->setFixedSize(30,30);
     btnStart->setToolTip(tr("Start Programming"));
-    btnStart->setText(tr("Start"));
+    btnStart->setIcon(QIcon(":/Icon/runing"));
     connect(btnStart,SIGNAL(clicked()),this,SLOT(handel_StartAction()));
+
+    QPushButton *btnConfig = new QPushButton(this);
+    btnConfig->setAutoFillBackground(true);
+    btnConfig->setFixedSize(30,30);
+    btnConfig->setToolTip(tr("Software Setting"));
+    btnConfig->setIcon(QIcon(":/Icon/ico_setting"));
+    connect(btnConfig,SIGNAL(clicked()),this,SLOT(handel_SettingAction()));
 
     /*browse btn*/
     QPushButton *btnBrowse = new QPushButton(this);
     btnBrowse->setAutoFillBackground(true);
-    //btnBrowse->setFixedSize(30,30);
+    btnBrowse->setFixedSize(30,30);
     btnBrowse->setToolTip(tr("Select firmware"));
-    btnBrowse->setText(tr("Browse"));
+    btnBrowse->setIcon(QIcon(":/Icon/browse_file"));
     connect(btnBrowse,SIGNAL(clicked()),this,SLOT(handel_BrowseFile()));
 
     LPath = new QLineEdit(this);
     LPath->setReadOnly(true);
     LPath->setMinimumSize(150,30);
+
 
     QSpacerItem *SendSpitem = new QSpacerItem(10,0, QSizePolicy::Fixed, QSizePolicy::Minimum);
 
@@ -83,11 +91,18 @@ void QuickProg::LoadToolBar(QHBoxLayout *lay)
     lay->addWidget(xBaud);
     lay->addWidget(LPath);
     lay->addWidget(btnBrowse);
-    lay->addSpacerItem(SendSpitem);
     lay->addWidget(btnStart);
+    lay->addSpacerItem(SendSpitem);
+
+    lay->addWidget(btnConfig);
 
     /*load serial port*/
     handel_LoadSerialPort();
+}
+
+void QuickProg::handel_SettingAction()
+{
+    qDebug() << "hoo";
 }
 
 void QuickProg::handel_BrowseFile()
@@ -102,6 +117,7 @@ void QuickProg::handel_BrowseFile()
 
 void QuickProg::handel_StartAction()
 {
+
     programmer->SetSerialPort(xPort->currentText());
     programmer->start();
 }
@@ -113,6 +129,7 @@ void QuickProg::handel_LoadSerialPort()
     int i=0;
     Q_FOREACH(QSerialPortInfo port, QSerialPortInfo::availablePorts())
     {
+        //qDebug() << port.productIdentifier() << port.vendorIdentifier();
         xPort->addItem(port.portName());
         if(i==0) xPort->setToolTip((port.description()=="") ? "None":port.description());
         xPort->setItemData(i++,(port.description()=="") ? "None":port.description(),Qt::ToolTipRole);

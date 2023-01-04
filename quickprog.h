@@ -23,6 +23,7 @@ public:
     ~QuickProg();
 
 private slots:
+    void handel_SettingAction();
     void handel_LoadSerialPort();
     void handel_StartAction();
     void handel_BrowseFile();

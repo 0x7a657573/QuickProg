@@ -3,4 +3,11 @@
     <qresource prefix="/bin">
         <file alias="MT6261_Bootloader">files/mt6261_da.bin</file>
     </qresource>
+    <qresource prefix="/Icon">
+        <file alias="ico_setting">files/icons8-settings-30.png</file>
+        <file alias="browse_file">files/icons8-live-folder-30.png</file>
+        <file alias="start30">files/icons8-play-40.png</file>
+        <file alias="start80">files/icons8-play-80.png</file>
+        <file alias="runing">files/icons8-running-30.png</file>
+    </qresource>
 </RCC>
