@@ -5,17 +5,17 @@
 #include <QPushButton>
 #include <QSpacerItem>
 #include <QFileDialog>
+#include <settingdialog.h>
 
 QuickProg::QuickProg(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::QuickProg)
 {
     ui->setupUi(this);
-    QVBoxLayout *main_lay = new QVBoxLayout(this);
-    QHBoxLayout *Toolbarlay = new QHBoxLayout(this);
+    QVBoxLayout *main_lay = new QVBoxLayout();
+    QHBoxLayout *Toolbarlay = new QHBoxLayout();
     LoadToolBar(Toolbarlay);
     Toolbarlay->setAlignment(Qt::AlignLeft);
-
 
     programmer = new zprog(this);
 
@@ -26,8 +26,6 @@ QuickProg::QuickProg(QWidget *parent)
     QWidget *widget = new QWidget();
     widget->setLayout(main_lay);
     setCentralWidget(widget);
-
-    //setCentralWidget(programmer);
 }
 
 
@@ -102,7 +100,8 @@ void QuickProg::LoadToolBar(QHBoxLayout *lay)
 
 void QuickProg::handel_SettingAction()
 {
-    qDebug() << "hoo";
+    settingdialog setting(this);
+    qDebug() << setting.exec();
 }
 
 void QuickProg::handel_BrowseFile()

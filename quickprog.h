@@ -9,6 +9,7 @@
 #include <QSerialPort>
 #include <QLineEdit>
 #include <zprog/zprog.h>
+#include <QSettings>
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class QuickProg; }
@@ -37,5 +38,6 @@ private:
 
 protected:
     zprog *programmer;
+    QSettings Settings;
 };
 #endif // QUICKPROG_H

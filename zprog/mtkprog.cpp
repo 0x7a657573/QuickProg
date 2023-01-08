@@ -844,6 +844,8 @@ void mtkprog::Start(void)
     }
 
     xPort = new QSerialPort(xPort_PortName);
+    //xPort->dataTerminalReadyChanged();
+    //xPort->setDataTerminalReady();
 
     if(!open())
     {

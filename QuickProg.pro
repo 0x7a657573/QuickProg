@@ -12,11 +12,13 @@ CONFIG += c++17
 SOURCES += \
     main.cpp \
     quickprog.cpp \
+    settingdialog.cpp \
     zprog/mtkprog.cpp \
     zprog/zprog.cpp
 
 HEADERS += \
     quickprog.h \
+    settingdialog.h \
     zprog/mtkprog.h \
     zprog/zprog.h
 
