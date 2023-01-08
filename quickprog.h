@@ -36,6 +36,8 @@ private:
     QLineEdit *LPath;
     Ui::QuickProg *ui;
     void LoadToolBar(QHBoxLayout *lay);
+    void LoadSetting();
+    void SaveSetting();
 
 protected:
     zprog *programmer;

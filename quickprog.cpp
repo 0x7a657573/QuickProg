@@ -12,6 +12,10 @@ QuickProg::QuickProg(QWidget *parent)
     , ui(new Ui::QuickProg)
 {
     ui->setupUi(this);
+
+    /*load setting*/
+    LoadSetting();
+
     QVBoxLayout *main_lay = new QVBoxLayout();
     QHBoxLayout *Toolbarlay = new QHBoxLayout();
     LoadToolBar(Toolbarlay);
@@ -28,14 +32,10 @@ QuickProg::QuickProg(QWidget *parent)
     setCentralWidget(widget);
 }
 
-
-
 QuickProg::~QuickProg()
 {
     delete ui;
 }
-
-
 
 void QuickProg::LoadToolBar(QHBoxLayout *lay)
 {
@@ -98,10 +98,42 @@ void QuickProg::LoadToolBar(QHBoxLayout *lay)
     handel_LoadSerialPort();
 }
 
+void QuickProg::LoadSetting()
+{
+    bool OK;
+    QSettings app("config.ini", QSettings::IniFormat);
+    AppSetting.EnablePowerControl = app.value("PowerControl",false).toBool();
+    AppSetting.IsPowerControlInverse = app.value("PowerControlInverse",false).toBool();
+    AppSetting.PowerControlPin = app.value("PowerControlPin",0).toUInt(&OK)==1 ? RTS_pin:DTR_pin;
+
+    AppSetting.EnableUSBFilter = app.value("USBFilter",false).toBool();
+    AppSetting.USB_PID =(uint16_t) app.value("PID",0).toUInt(&OK);
+    AppSetting.USB_VID =(uint16_t) app.value("VID",0).toUInt(&OK);
+}
+
+void QuickProg::SaveSetting()
+{
+    QSettings app("config.ini", QSettings::IniFormat);
+    app.setValue("PowerControl",QVariant::fromValue(AppSetting.EnablePowerControl));
+    app.setValue("PowerControlInverse",QVariant::fromValue(AppSetting.IsPowerControlInverse));
+    app.setValue("PowerControlPin",QVariant::fromValue(AppSetting.PowerControlPin));
+
+    app.setValue("USBFilter",QVariant::fromValue(AppSetting.EnableUSBFilter));
+    app.setValue("PID",QVariant::fromValue(AppSetting.USB_PID));
+    app.setValue("VID",QVariant::fromValue(AppSetting.USB_VID));
+}
+
 void QuickProg::handel_SettingAction()
 {
     settingdialog setting(&AppSetting,this);
-    qDebug() << setting.exec();
+    if(setting.exec())
+    {
+        /*save setting to file*/
+        SaveSetting();
+
+        /*try load setting*/
+
+    }
 }
 
 void QuickProg::handel_BrowseFile()
