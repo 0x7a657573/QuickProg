@@ -5,7 +5,7 @@
 #include <QPushButton>
 #include <QSpacerItem>
 #include <QFileDialog>
-#include <settingdialog.h>
+
 
 QuickProg::QuickProg(QWidget *parent)
     : QMainWindow(parent)
@@ -100,7 +100,7 @@ void QuickProg::LoadToolBar(QHBoxLayout *lay)
 
 void QuickProg::handel_SettingAction()
 {
-    settingdialog setting(this);
+    settingdialog setting(&AppSetting,this);
     qDebug() << setting.exec();
 }
 

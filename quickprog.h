@@ -10,6 +10,7 @@
 #include <QLineEdit>
 #include <zprog/zprog.h>
 #include <QSettings>
+#include <settingdialog.h>
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class QuickProg; }
@@ -38,6 +39,6 @@ private:
 
 protected:
     zprog *programmer;
-    QSettings Settings;
+    AppSetting_t AppSetting;
 };
 #endif // QUICKPROG_H
