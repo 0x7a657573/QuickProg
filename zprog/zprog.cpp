@@ -13,6 +13,14 @@ zprog::zprog(QWidget *parent)
 
     Layout->addWidget(Progress);
     Layout->addWidget(log_view);
+    PowerContorl = false;
+}
+
+void zprog::SetPowerContorl(bool Enable,bool Is_DTR,bool Is_Not)
+{
+    PowerContorl = Enable;
+    IsPcDTR = Is_DTR;
+    IsPcNot = Is_Not;
 }
 
 void zprog::SetSerialPort(const QString PortName)
@@ -24,6 +32,7 @@ void zprog::SetfirmwarePath(const QString firmwarePath)
 {
     xFirmwarePath = firmwarePath;
 }
+
 
 void zprog::start(void)
 {

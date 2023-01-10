@@ -16,6 +16,7 @@ public:
     explicit zprog(QWidget *parent = nullptr);
     void SetSerialPort(const QString PortName);
     void SetfirmwarePath(const QString firmwarePath);
+    void SetPowerContorl(bool Enable,bool Is_DTR,bool Is_Not=false);
     void start(void);
 
 signals:
@@ -28,7 +29,11 @@ private slots:
 private:
     void log();
     void DoPrograming(void);
+
 protected:
+    bool PowerContorl;
+    bool IsPcDTR;
+    bool IsPcNot;
 
     QString xFirmwarePath;
     QString xPortName;

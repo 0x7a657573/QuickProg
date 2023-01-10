@@ -38,6 +38,21 @@ void mtkprog::update_progress(uint32_t val)
     emit progress(p);
 }
 
+void mtkprog::PowerControl(bool status)
+{
+    if(xPort==nullptr)
+        return;
+
+    if(status)
+    {
+        xPort->setRequestToSend(false);
+    }
+    else
+    {
+        xPort->setRequestToSend(true);
+    }
+}
+
 bool mtkprog::open(void)
 {
     if(xPort==nullptr)  return false;
@@ -46,6 +61,7 @@ bool mtkprog::open(void)
     /*open Serial Port*/
     if(xPort->open(QIODevice::ReadWrite)==true)
     {
+        PowerControl(false);// Power Off Device
         emit wlog(QString("Connected to {%1}").arg(xPort->portName()));
     }
     else
@@ -228,10 +244,14 @@ bool mtkprog::loadBootLoader(QString fname)
 bool mtkprog::connect(uint32_t timeout)
 {
     QElapsedTimer elapsed_timer;
+    QElapsedTimer Power_timer;
     emit wlog(tr("Please reset the device.\nWaiting."));
     elapsed_timer.start();
+    Power_timer.start();
     const char hA = 0xA0;
     const char rID[] = {0x0A,0x50,0x05};
+    QThread::sleep(1);
+    PowerControl(true);
     while(true)
     {
         xPort->readAll();
@@ -260,6 +280,15 @@ bool mtkprog::connect(uint32_t timeout)
                 emit wlog(QString("R: {%1}").arg(data.toHex(',')));
                 return false;
             }
+        }
+
+        if (Power_timer.elapsed() > 3*1000)
+        {
+            Power_timer.restart();
+            emit wlog(tr("Power Action"));
+            PowerControl(false);
+            QThread::sleep(1);
+            PowerControl(true);
         }
 
         if (elapsed_timer.elapsed() > timeout*1000)
@@ -844,8 +873,7 @@ void mtkprog::Start(void)
     }
 
     xPort = new QSerialPort(xPort_PortName);
-    //xPort->dataTerminalReadyChanged();
-    //xPort->setDataTerminalReady();
+
 
     if(!open())
     {

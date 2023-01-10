@@ -127,6 +127,7 @@ private:
     bool da_write(uint32_t block=4096);
     bool da_write_data(QByteArray &fw_data,uint32_t block=4096);
     bool da_reset();
+    void PowerControl(bool status);
 
     bool connect(uint32_t timeout=30);
     bool da_start(void);

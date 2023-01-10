@@ -149,6 +149,9 @@ void QuickProg::handel_BrowseFile()
 void QuickProg::handel_StartAction()
 {
 
+    programmer->SetPowerContorl(AppSetting.EnablePowerControl,
+                                AppSetting.PowerControlPin==DTR_pin,
+                                AppSetting.IsPowerControlInverse);
     programmer->SetSerialPort(xPort->currentText());
     programmer->start();
 }
