@@ -40,7 +40,7 @@ void zprog::start(void)
     mtkprog *mtkworker;
 
     thread = new QThread();
-    mtkworker = new mtkprog(xPortName,xFirmwarePath);
+    mtkworker = new mtkprog(xPortName,xFirmwarePath,PowerContorl,IsPcDTR,IsPcNot);
     mtkworker->moveToThread(thread);
 
     connect(mtkworker, &mtkprog::progress,this , &zprog::setProgress);

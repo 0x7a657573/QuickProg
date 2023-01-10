@@ -11,13 +11,17 @@ DA_t MT6261_DA[] =
     {.offset = 0x00718, .size=0x1e5c8, .address=0x10020000}
 };
 
-mtkprog::mtkprog(QString PortName,QString firmware)
+mtkprog::mtkprog(QString PortName,QString firmware, bool PwCo,bool PwIsDTR,bool PwInverse)
 {
     xFirmware_Path = firmware;
     xPort_PortName = PortName;
     xPort = nullptr;
     ReadTimeout = 200;
     BaudRate = UART_BAUD_460800;
+
+    mtk_PwCo = PwCo;
+    mtk_PwIsDTR = PwIsDTR;
+    mtk_PwInverse = PwInverse;
 }
 
 void mtkprog::setup_progress(uint32_t max)
@@ -40,16 +44,20 @@ void mtkprog::update_progress(uint32_t val)
 
 void mtkprog::PowerControl(bool status)
 {
+    if(mtk_PwCo==false)
+            return;
+
     if(xPort==nullptr)
         return;
 
-    if(status)
+
+    if(mtk_PwIsDTR)
     {
-        xPort->setRequestToSend(false);
+        xPort->setDataTerminalReady(status!=mtk_PwInverse);
     }
     else
     {
-        xPort->setRequestToSend(true);
+        xPort->setRequestToSend(status!=mtk_PwInverse);
     }
 }
 

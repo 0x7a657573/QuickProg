@@ -56,7 +56,7 @@ class mtkprog : public QObject
     Q_OBJECT
 
 public:
-    mtkprog(QString PortName,QString firmware);
+    mtkprog(QString PortName,QString firmware, bool PwCo=false,bool PwIsDTR=true,bool PwInverse=true);
 
     /*type*/
     typedef struct
@@ -94,6 +94,8 @@ signals:
     void error(QString err);
 
 private:
+    bool mtk_PwCo, mtk_PwIsDTR, mtk_PwInverse;
+
     QString     xPort_PortName;
     QString     xFirmware_Path;
     Firmware_t  xFirmware;

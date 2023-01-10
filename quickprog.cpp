@@ -45,7 +45,7 @@ void QuickProg::LoadToolBar(QHBoxLayout *lay)
     xPort->setToolTip(tr("Select Serial Port"));
 
     /*Baud Rate*/
-    int Bauds[] = {2400,4800,9600,19200,38400,57600,115200,230400,460800,921600};
+    int Bauds[] = {115200,230400,460800,921600};
     xBaud = new QComboBox(this);
     xBaud->setFixedHeight(30);
     xBaud->setToolTip(tr("set BaudRate"));
@@ -53,7 +53,7 @@ void QuickProg::LoadToolBar(QHBoxLayout *lay)
     {
        xBaud->addItem( QString::number(Bauds[i]) );
     }
-    xBaud->setCurrentIndex(6); /*Set in 115200*/
+    xBaud->setCurrentIndex(0); /*Set in 115200*/
 
     /*start btn*/
     QPushButton *btnStart = new QPushButton(this);
@@ -104,7 +104,8 @@ void QuickProg::LoadSetting()
     QSettings app("config.ini", QSettings::IniFormat);
     AppSetting.EnablePowerControl = app.value("PowerControl",false).toBool();
     AppSetting.IsPowerControlInverse = app.value("PowerControlInverse",false).toBool();
-    AppSetting.PowerControlPin = app.value("PowerControlPin",0).toUInt(&OK)==1 ? RTS_pin:DTR_pin;
+    //qDebug() << app.value("PowerControlPin",0).toUInt(&OK);
+    AppSetting.PowerControlPin = (app.value("PowerControlPin",false).toBool()) ? DTR_pin:RTS_pin;
 
     AppSetting.EnableUSBFilter = app.value("USBFilter",false).toBool();
     AppSetting.USB_PID =(uint16_t) app.value("PID",0).toUInt(&OK);
@@ -116,11 +117,13 @@ void QuickProg::SaveSetting()
     QSettings app("config.ini", QSettings::IniFormat);
     app.setValue("PowerControl",QVariant::fromValue(AppSetting.EnablePowerControl));
     app.setValue("PowerControlInverse",QVariant::fromValue(AppSetting.IsPowerControlInverse));
-    app.setValue("PowerControlPin",QVariant::fromValue(AppSetting.PowerControlPin));
+    bool pci = (AppSetting.PowerControlPin==DTR_pin);
+    app.setValue("PowerControlPin",QVariant::fromValue(pci));
 
     app.setValue("USBFilter",QVariant::fromValue(AppSetting.EnableUSBFilter));
     app.setValue("PID",QVariant::fromValue(AppSetting.USB_PID));
     app.setValue("VID",QVariant::fromValue(AppSetting.USB_VID));
+    app.sync();
 }
 
 void QuickProg::handel_SettingAction()
