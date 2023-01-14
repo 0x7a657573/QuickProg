@@ -110,6 +110,8 @@ void QuickProg::LoadSetting()
     AppSetting.EnableUSBFilter = app.value("USBFilter",false).toBool();
     AppSetting.USB_PID =(uint16_t) app.value("PID",0).toUInt(&OK);
     AppSetting.USB_VID =(uint16_t) app.value("VID",0).toUInt(&OK);
+    AppSetting.USB_row =(uint8_t) app.value("ROW",0).toUInt(&OK);
+    AppSetting.USB_col =(uint8_t) app.value("COL",0).toUInt(&OK);
 }
 
 void QuickProg::SaveSetting()
@@ -123,7 +125,17 @@ void QuickProg::SaveSetting()
     app.setValue("USBFilter",QVariant::fromValue(AppSetting.EnableUSBFilter));
     app.setValue("PID",QVariant::fromValue(AppSetting.USB_PID));
     app.setValue("VID",QVariant::fromValue(AppSetting.USB_VID));
+    app.setValue("ROW",QVariant::fromValue(AppSetting.USB_row));
+    app.setValue("COL",QVariant::fromValue(AppSetting.USB_col));
     app.sync();
+}
+
+void QuickProg::reloadWindow()
+{
+    if(AppSetting.EnableUSBFilter)
+    {
+
+    }
 }
 
 void QuickProg::handel_SettingAction()
@@ -135,7 +147,7 @@ void QuickProg::handel_SettingAction()
         SaveSetting();
 
         /*try load setting*/
-
+        reloadWindow();
     }
 }
 

@@ -42,18 +42,33 @@ settingdialog::settingdialog(AppSetting_t *setting,QWidget *parent) : QDialog(pa
 
     /*Usb Scanner Section*/
     uBox = new QGroupBox();
-    QHBoxLayout *UsbScanner_main = new QHBoxLayout(uBox);
     uBox->setCheckable(true);
     uBox->setChecked(app->EnableUSBFilter);
     uBox->setTitle("Usb Scanner");
 
+    QVBoxLayout *UsbScanner_main = new QVBoxLayout(uBox);
+    QHBoxLayout *UsbScanner_HW = new QHBoxLayout();
+
     eVID = new QLineEdit(tr("0x") + QString("%1").arg(app->USB_VID,4,16,QLatin1Char('0')).toUpper());
     ePID = new QLineEdit(tr("0x") + QString("%1").arg(app->USB_PID,4,16,QLatin1Char('0')).toUpper());
 
-    UsbScanner_main->addWidget(new QLabel(tr("VID"),uBox));
-    UsbScanner_main->addWidget(eVID);
-    UsbScanner_main->addWidget(new QLabel(tr("PID"),uBox));
-    UsbScanner_main->addWidget(ePID);
+    UsbScanner_HW->addWidget(new QLabel(tr("VID"),uBox));
+    UsbScanner_HW->addWidget(eVID);
+    UsbScanner_HW->addWidget(new QLabel(tr("PID"),uBox));
+    UsbScanner_HW->addWidget(ePID);
+
+    QHBoxLayout *UsbScanner_SW = new QHBoxLayout();
+
+    eRow = new QLineEdit(QString("%1").arg(app->USB_row));
+    eCol = new QLineEdit(QString("%1").arg(app->USB_col));
+
+    UsbScanner_SW->addWidget(new QLabel(tr("Row"),uBox));
+    UsbScanner_SW->addWidget(eRow);
+    UsbScanner_SW->addWidget(new QLabel(tr("Col"),uBox));
+    UsbScanner_SW->addWidget(eCol);
+
+    UsbScanner_main->addLayout(UsbScanner_HW);
+    UsbScanner_main->addLayout(UsbScanner_SW);
 
     uBox->setLayout(UsbScanner_main);
 
@@ -83,6 +98,8 @@ void settingdialog::handel_save()
     app->EnableUSBFilter = uBox->isChecked();
     app->USB_PID = (uint16_t)ePID->text().toInt(&ok,16);
     app->USB_VID = (uint16_t)eVID->text().toInt(&ok,16);
+    app->USB_row = (uint8_t)eRow->text().toInt();
+    app->USB_col = (uint8_t)eCol->text().toInt();
     this->accept();
 }
 

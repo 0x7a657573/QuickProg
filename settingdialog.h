@@ -21,6 +21,8 @@ typedef struct
     bool EnableUSBFilter;
     uint16_t USB_VID;
     uint16_t USB_PID;
+    uint8_t  USB_col;
+    uint8_t  USB_row;
 }AppSetting_t;
 
 class settingdialog : public QDialog
@@ -43,6 +45,8 @@ protected:
     QCheckBox *PowerControl_ck;
     QLineEdit *eVID;
     QLineEdit *ePID;
+    QLineEdit *eRow;
+    QLineEdit *eCol;
     AppSetting_t *app;
 };
 
