@@ -5,7 +5,7 @@
 #include <QPushButton>
 #include <QSpacerItem>
 #include <QFileDialog>
-
+#include <QProcess>
 
 QuickProg::QuickProg(QWidget *parent)
     : QMainWindow(parent)
@@ -21,10 +21,8 @@ QuickProg::QuickProg(QWidget *parent)
     LoadToolBar(Toolbarlay);
     Toolbarlay->setAlignment(Qt::AlignLeft);
 
-    programmer = new zprog(this);
-
     main_lay->addLayout(Toolbarlay);
-    main_lay->addWidget(programmer);
+    LoadProgrammer(main_lay);
 
 
     QWidget *widget = new QWidget();
@@ -130,11 +128,25 @@ void QuickProg::SaveSetting()
     app.sync();
 }
 
-void QuickProg::reloadWindow()
+void QuickProg::LoadProgrammer(QVBoxLayout *parentlay)
 {
     if(AppSetting.EnableUSBFilter)
     {
-
+        for(int y=0;y<AppSetting.USB_row;y++)
+        {
+            QHBoxLayout *Row_lay = new QHBoxLayout();
+            for(int x=0;x<AppSetting.USB_col;x++)
+            {
+                zprog *Tp = new zprog(this);
+                Row_lay->addWidget(Tp);
+            }
+            parentlay->addLayout(Row_lay);
+        }
+    }
+    else
+    {
+        programmer = new zprog(this);
+        parentlay->addWidget(programmer);
     }
 }
 
@@ -147,7 +159,8 @@ void QuickProg::handel_SettingAction()
         SaveSetting();
 
         /*try load setting*/
-        reloadWindow();
+        qApp->quit();
+        QProcess::startDetached(qApp->arguments()[0], qApp->arguments());
     }
 }
 

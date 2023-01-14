@@ -38,7 +38,7 @@ private:
     void LoadToolBar(QHBoxLayout *lay);
     void LoadSetting();
     void SaveSetting();
-    void reloadWindow();
+    void LoadProgrammer(QVBoxLayout *parentlay);
 
 protected:
     zprog *programmer;
