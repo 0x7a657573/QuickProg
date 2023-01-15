@@ -130,8 +130,7 @@ QByteArray mtkprog::send(QByteArray &data,uint32_t sz)
 
     if(sz != rbyte.size())
     {
-        qDebug() << "We Not Get Enogh Byte :(((";
-        rbyte.fill('!',sz);
+        rbyte.fill(0x00,sz);
     }
 
     return rbyte;
@@ -306,7 +305,7 @@ bool mtkprog::connect(uint32_t timeout)
             {
                 emit wlog(tr("Boot Erorr!"));
                 emit wlog(QString("R: {%1}").arg(data.toHex(',')));
-                return false;
+                //return false;
             }
         }
 
