@@ -109,11 +109,18 @@ QByteArray mtkprog::send(QByteArray &data,uint32_t sz)
             rbyte += xPort->read(sz - rbyte.size());
             //qDebug() << "WeRead " << rbyte.size() << "wait for" << sz - rbyte.size() << "byte";
         }
-        if(Try<=0)
-            qDebug() << "Wait TimeOut !";
+//        if(Try<=0)
+//            qDebug() << "Wait TimeOut !";
 
         //qDebug() << "send R" << sz << rbyte.toHex(',');
     }
+
+    if(sz != rbyte.size())
+    {
+        qDebug() << "We Not Get Enogh Byte :(((";
+        rbyte.fill('!',sz);
+    }
+
     return rbyte;
 }
 
@@ -262,7 +269,7 @@ bool mtkprog::connect(uint32_t timeout)
     PowerControl(true);
     while(true)
     {
-        xPort->readAll();
+        //xPort->readAll();
         xPort->write(&hA,1);
         xPort->waitForReadyRead(50);
         QByteArray data = xPort->readAll();
@@ -296,6 +303,8 @@ bool mtkprog::connect(uint32_t timeout)
             emit wlog(tr("Power Action"));
             PowerControl(false);
             QThread::sleep(1);
+            xPort->flush();
+            xPort->readAll();
             PowerControl(true);
         }
 
