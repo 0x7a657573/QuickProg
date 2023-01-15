@@ -137,16 +137,35 @@ void QuickProg::LoadProgrammer(QVBoxLayout *parentlay)
             QHBoxLayout *Row_lay = new QHBoxLayout();
             for(int x=0;x<AppSetting.USB_col;x++)
             {
+
                 zprog *Tp = new zprog(this);
+                Tp->setEnabled(false);
+                programmers.append(Tp);
                 Row_lay->addWidget(Tp);
             }
             parentlay->addLayout(Row_lay);
         }
+
+        int index=0;
+        Q_FOREACH(QSerialPortInfo port, QSerialPortInfo::availablePorts())
+        {
+            if((AppSetting.USB_PID==0 || AppSetting.USB_PID==port.productIdentifier()) &&
+              (AppSetting.USB_VID==0 || AppSetting.USB_VID==port.vendorIdentifier()))
+            {
+                if(index<programmers.length())
+                {
+                    programmers[index]->setEnabled(true);
+                    programmers[index]->SetSerialPort(port.portName());
+                    index++;
+                }
+            }
+        }
     }
     else
     {
-        programmer = new zprog(this);
-        parentlay->addWidget(programmer);
+        zprog *Tp = new zprog(this);
+        programmers.append(Tp);
+        parentlay->addWidget(Tp);
     }
 }
 
@@ -170,18 +189,23 @@ void QuickProg::handel_BrowseFile()
     if(fileName != "")
     {
         LPath->setText(fileName);
-        programmer->SetfirmwarePath(fileName);
     }
 }
 
 void QuickProg::handel_StartAction()
 {
+      Q_FOREACH(zprog *programmer, programmers)
+      {
+        if(programmer->isEnabled())
+        {
+            programmer->SetPowerContorl(AppSetting.EnablePowerControl,
+                                        AppSetting.PowerControlPin==DTR_pin,
+                                        AppSetting.IsPowerControlInverse);
+            programmer->SetfirmwarePath(LPath->text());
+            programmer->start();
+        }
+      }
 
-    programmer->SetPowerContorl(AppSetting.EnablePowerControl,
-                                AppSetting.PowerControlPin==DTR_pin,
-                                AppSetting.IsPowerControlInverse);
-    programmer->SetSerialPort(xPort->currentText());
-    programmer->start();
 }
 
 

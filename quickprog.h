@@ -11,6 +11,7 @@
 #include <zprog/zprog.h>
 #include <QSettings>
 #include <settingdialog.h>
+#include <QList>
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class QuickProg; }
@@ -41,7 +42,7 @@ private:
     void LoadProgrammer(QVBoxLayout *parentlay);
 
 protected:
-    zprog *programmer;
+    QList<zprog*> programmers;
     AppSetting_t AppSetting;
 };
 #endif // QUICKPROG_H
