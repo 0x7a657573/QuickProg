@@ -25,6 +25,11 @@ zprog::zprog(QWidget *parent)
     PowerContorl = false;
 }
 
+void zprog::SetBaud(int baud)
+{
+    xBaud = baud;
+}
+
 void zprog::SetPowerContorl(bool Enable,bool Is_DTR,bool Is_Not)
 {
     PowerContorl = Enable;
@@ -55,6 +60,25 @@ void zprog::start(void)
 
     thread = new QThread();
     mtkworker = new mtkprog(xPortName,xFirmwarePath,PowerContorl,IsPcDTR,IsPcNot);
+
+    switch (xBaud) {
+    case 115200:
+        mtkworker->setBaud(mtkprog::UART_BAUD_115200);
+        break;
+    case 230400:
+        mtkworker->setBaud(mtkprog::UART_BAUD_230400);
+        break;
+    case 460800:
+        mtkworker->setBaud(mtkprog::UART_BAUD_460800);
+        break;
+    case 921600:
+        mtkworker->setBaud(mtkprog::UART_BAUD_921600);
+        break;
+    default:
+        mtkworker->setBaud(mtkprog::UART_BAUD_460800);
+        break;
+    }
+
     mtkworker->moveToThread(thread);
 
     connect(mtkworker, &mtkprog::progress,this , &zprog::setProgress);

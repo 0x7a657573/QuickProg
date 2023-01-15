@@ -202,6 +202,7 @@ void QuickProg::handel_StartAction()
         {
             if(!AppSetting.EnableUSBFilter)
                 programmer->SetSerialPort(xPort->currentText());
+            programmer->SetBaud(xBaud->currentText().toInt());
             programmer->SetPowerContorl(AppSetting.EnablePowerControl,
                                         AppSetting.PowerControlPin==DTR_pin,
                                         AppSetting.IsPowerControlInverse);

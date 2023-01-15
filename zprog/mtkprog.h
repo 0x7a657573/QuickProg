@@ -91,7 +91,9 @@ public:
         mtk_finishedWithError,
     }mtk_status_t;
 
+    void setBaud(mtkprog::mtk_baud baud);
     mtk_status_t getStatus(void);
+
 public slots:
     void Start(void);
 

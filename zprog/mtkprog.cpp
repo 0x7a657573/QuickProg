@@ -25,6 +25,11 @@ mtkprog::mtkprog(QString PortName,QString firmware, bool PwCo,bool PwIsDTR,bool 
     status = mtk_stop;
 }
 
+void mtkprog::setBaud(mtkprog::mtk_baud baud)
+{
+    BaudRate = baud;
+}
+
 void mtkprog::setup_progress(uint32_t max)
 {
     max_pg = max;

@@ -15,6 +15,7 @@ class zprog : public QWidget
     Q_OBJECT
 public:
     explicit zprog(QWidget *parent = nullptr);
+    void SetBaud(int baud);
     void SetSerialPort(const QString PortName);
     void SetfirmwarePath(const QString firmwarePath);
     void SetPowerContorl(bool Enable,bool Is_DTR,bool Is_Not=false);
@@ -52,6 +53,8 @@ protected:
 
     /*status*/
      QLabel *imgStatus;
+
+     int xBaud;
 };
 
 #endif // ZPROG_H
