@@ -38,7 +38,7 @@ QuickProg::~QuickProg()
 void QuickProg::LoadToolBar(QHBoxLayout *lay)
 {
     /*Serial Port List*/
-    xPort = new QComboBox(this);
+    xPort = new QComboBox();
     xPort->setFixedHeight(30);
     xPort->setToolTip(tr("Select Serial Port"));
 
@@ -83,7 +83,9 @@ void QuickProg::LoadToolBar(QHBoxLayout *lay)
 
     QSpacerItem *SendSpitem = new QSpacerItem(10,0, QSizePolicy::Fixed, QSizePolicy::Minimum);
 
-    lay->addWidget(xPort);
+    if(!AppSetting.EnableUSBFilter)
+        lay->addWidget(xPort);
+
     lay->addWidget(xBaud);
     lay->addWidget(LPath);
     lay->addWidget(btnBrowse);
@@ -198,6 +200,8 @@ void QuickProg::handel_StartAction()
       {
         if(programmer->isEnabled())
         {
+            if(!AppSetting.EnableUSBFilter)
+                programmer->SetSerialPort(xPort->currentText());
             programmer->SetPowerContorl(AppSetting.EnablePowerControl,
                                         AppSetting.PowerControlPin==DTR_pin,
                                         AppSetting.IsPowerControlInverse);
