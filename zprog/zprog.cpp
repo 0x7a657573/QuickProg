@@ -26,6 +26,7 @@ void zprog::SetPowerContorl(bool Enable,bool Is_DTR,bool Is_Not)
 void zprog::SetSerialPort(const QString PortName)
 {
     xPortName = PortName;
+    writelog("Set "+PortName);
 }
 
 void zprog::SetfirmwarePath(const QString firmwarePath)
@@ -52,6 +53,7 @@ void zprog::start(void)
     connect( mtkworker, &mtkprog::finished, mtkworker, &mtkprog::deleteLater);
     connect( thread, &QThread::finished, thread, &QThread::deleteLater);
     thread->start();
+
 }
 
 void zprog::writelog(QString str)
