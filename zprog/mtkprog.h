@@ -84,6 +84,14 @@ public:
         QByteArray data;
     }Firmware_t;
 
+    typedef enum {
+        mtk_stop,
+        mtk_working,
+        mtk_finished,
+        mtk_finishedWithError,
+    }mtk_status_t;
+
+    mtk_status_t getStatus(void);
 public slots:
     void Start(void);
 
@@ -92,6 +100,7 @@ signals:
     void wlog(QString str);
     void finished();
     void error(QString err);
+    void finishedWithStatus(bool hasErorr);
 
 private:
     bool mtk_PwCo, mtk_PwIsDTR, mtk_PwInverse;
@@ -99,6 +108,7 @@ private:
     QString     xPort_PortName;
     QString     xFirmware_Path;
     Firmware_t  xFirmware;
+    mtk_status_t status;
 
     QSerialPort *xPort;
     QByteArray DaFile;
@@ -110,7 +120,7 @@ private:
  protected:
     mtk_baud BaudRate;
     uint32_t ReadTimeout;
-    void die(void);
+    void die(bool HasError=true);
     bool open(void);
     QByteArray send(QByteArray &data,uint32_t sz=0);
     QByteArray cmd(QByteArray &command, uint32_t sz=0);

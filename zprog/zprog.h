@@ -8,6 +8,7 @@
 #include <QPlainTextEdit>
 #include <QSerialPort>
 #include <QThread>
+#include <QLabel>
 
 class zprog : public QWidget
 {
@@ -25,6 +26,7 @@ signals:
 private slots:
     void setProgress(int value);
     void writelog(QString str);
+    void finished(bool hasError);
 
 private:
     void log();
@@ -40,12 +42,16 @@ protected:
 
     /*Layouts*/
     QVBoxLayout *Layout;
+    QHBoxLayout *HLay;
 
     /*log window*/
     QPlainTextEdit *log_view;
 
     /*ProgressBar*/
     QProgressBar *Progress;
+
+    /*status*/
+     QLabel *imgStatus;
 };
 
 #endif // ZPROG_H

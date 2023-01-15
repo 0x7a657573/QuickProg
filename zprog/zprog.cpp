@@ -1,17 +1,26 @@
 #include "zprog.h"
 #include <QDebug>
 #include "mtkprog.h"
-
+#include <QImage>
 zprog::zprog(QWidget *parent)
     : QWidget{parent}
 {
     Layout = new QVBoxLayout(this);
 
+    HLay = new QHBoxLayout();
+    imgStatus = new QLabel("");
+
+    imgStatus->setPixmap(QPixmap::fromImage(QImage(":/Icon/wait")).scaled(16,16,Qt::KeepAspectRatio));
+    imgStatus->adjustSize();
     Progress = new QProgressBar(this);
+
+    HLay->addWidget(imgStatus);
+    HLay->addWidget(Progress);
+
     log_view = new QPlainTextEdit(this);
     log_view->setReadOnly(true);
 
-    Layout->addWidget(Progress);
+    Layout->addLayout(HLay);
     Layout->addWidget(log_view);
     PowerContorl = false;
 }
@@ -40,12 +49,17 @@ void zprog::start(void)
     QThread *thread;
     mtkprog *mtkworker;
 
+    log_view->clear();
+    /*update status*/
+    imgStatus->setPixmap(QPixmap::fromImage(QImage(":/Icon/wait")).scaled(16,16,Qt::KeepAspectRatio));
+
     thread = new QThread();
     mtkworker = new mtkprog(xPortName,xFirmwarePath,PowerContorl,IsPcDTR,IsPcNot);
     mtkworker->moveToThread(thread);
 
     connect(mtkworker, &mtkprog::progress,this , &zprog::setProgress);
     connect(mtkworker, &mtkprog::wlog,this , &zprog::writelog);
+    connect(mtkworker, &mtkprog::finishedWithStatus, this, &zprog::finished);
 
     //connect( worker, &mtkprog::error, this, &zprog::errorString);
     connect( thread, &QThread::started, mtkworker, &mtkprog::Start);
@@ -54,6 +68,18 @@ void zprog::start(void)
     connect( thread, &QThread::finished, thread, &QThread::deleteLater);
     thread->start();
 
+
+
+
+}
+
+void zprog::finished(bool hasError)
+{
+    /*check status*/
+    if(!hasError)
+        imgStatus->setPixmap(QPixmap::fromImage(QImage(":/Icon/ok")).scaled(16,16,Qt::KeepAspectRatio));
+    else
+        imgStatus->setPixmap(QPixmap::fromImage(QImage(":/Icon/error")).scaled(16,16,Qt::KeepAspectRatio));
 }
 
 void zprog::writelog(QString str)

@@ -9,5 +9,8 @@
         <file alias="start30">files/icons8-play-40.png</file>
         <file alias="start80">files/icons8-play-80.png</file>
         <file alias="runing">files/icons8-running-30.png</file>
+        <file alias="wait">files/icons8-hourglass-30.png</file>
+        <file alias="ok">files/icons8-ok-30.png</file>
+        <file alias="error">files/icons8-high-priority-30.png</file>
     </qresource>
 </RCC>

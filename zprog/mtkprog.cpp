@@ -22,6 +22,7 @@ mtkprog::mtkprog(QString PortName,QString firmware, bool PwCo,bool PwIsDTR,bool 
     mtk_PwCo = PwCo;
     mtk_PwIsDTR = PwIsDTR;
     mtk_PwInverse = PwInverse;
+    status = mtk_stop;
 }
 
 void mtkprog::setup_progress(uint32_t max)
@@ -81,13 +82,20 @@ bool mtkprog::open(void)
     return true;
 }
 
-void mtkprog::die(void)
+void mtkprog::die(bool HasError)
 {
     if(xPort!=nullptr)
     {
         xPort->close();
         delete(xPort);
     }
+
+    if(HasError==false)
+        status = mtk_finished;
+    else
+        status = mtk_finishedWithError;
+
+    emit finishedWithStatus(HasError);
     emit finished();
 }
 
@@ -871,8 +879,14 @@ bool mtkprog::da_reset()
     return true;
 }
 
+mtkprog::mtk_status_t mtkprog::getStatus(void)
+{
+    return status;
+}
+
 void mtkprog::Start(void)
 {
+    status = mtk_working;
     /*check firmware*/
     if(xFirmware_Path == "")
     {
@@ -936,5 +950,5 @@ void mtkprog::Start(void)
     }
 
     emit wlog("firmware upload ok");
-    die();
+    die(false);
 }
