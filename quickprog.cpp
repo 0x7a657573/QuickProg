@@ -6,6 +6,7 @@
 #include <QSpacerItem>
 #include <QFileDialog>
 #include <QProcess>
+#include <QMessageBox>
 
 QuickProg::QuickProg(QWidget *parent)
     : QMainWindow(parent)
@@ -76,12 +77,21 @@ void QuickProg::LoadToolBar(QHBoxLayout *lay)
     btnBrowse->setIcon(QIcon(":/Icon/browse_file"));
     connect(btnBrowse,SIGNAL(clicked()),this,SLOT(handel_BrowseFile()));
 
+    /*About me btn*/
+    QPushButton *btnAboutme = new QPushButton(this);
+    btnAboutme->setAutoFillBackground(true);
+    btnAboutme->setIcon(QIcon(":/Icon/info"));
+    btnAboutme->setIconSize(QSize(20,20));
+    btnAboutme->setFixedSize(30,30);
+    btnAboutme->setToolTip(tr("About Me"));
+    connect(btnAboutme,SIGNAL(clicked()),this,SLOT(handel_AboutMe()));
+
     LPath = new QLineEdit(this);
     LPath->setReadOnly(true);
     LPath->setMinimumSize(150,30);
 
 
-    QSpacerItem *SendSpitem = new QSpacerItem(10,0, QSizePolicy::Fixed, QSizePolicy::Minimum);
+    QSpacerItem *SendSpitem = new QSpacerItem(0,0, QSizePolicy::Expanding, QSizePolicy::Minimum);
 
     if(!AppSetting.EnableUSBFilter)
         lay->addWidget(xPort);
@@ -93,9 +103,37 @@ void QuickProg::LoadToolBar(QHBoxLayout *lay)
     lay->addSpacerItem(SendSpitem);
 
     lay->addWidget(btnConfig);
+    lay->addWidget(btnAboutme);
 
     /*load serial port*/
     handel_LoadSerialPort();
+}
+
+void QuickProg::handel_AboutMe()
+{
+    QString translatedTextAboutQtCaption;
+        translatedTextAboutQtCaption = QMessageBox::tr(
+            "<h3>QuickProg</h3>"
+            "<p>This program Publish under GPL3 license</p>"
+            "<p>This program uses Qt version %1.</p>"
+            ).arg(QLatin1String(QT_VERSION_STR));
+
+        QString translatedTextAboutQtText;
+        translatedTextAboutQtText = QMessageBox::tr(
+            "<p>Website: <a href=\"http://%1/\">%1</a>.</p>"
+            "<p>Git: <a href=\"http://%2/\">GitHub</a>.</p>"
+            ""
+            ).arg(QLatin1String("0x7a657573.com"),
+                  QLatin1String("github.com/0x7a657573/QuickProg"));
+
+        QMessageBox *msgBox = new QMessageBox(this);
+        msgBox->setAttribute(Qt::WA_DeleteOnClose);
+        msgBox->setWindowTitle("About Me");
+        msgBox->setIconPixmap(QPixmap(":/icon/about"));
+        msgBox->setText(translatedTextAboutQtCaption);
+        msgBox->setInformativeText(translatedTextAboutQtText);
+        msgBox->exec();
+
 }
 
 void QuickProg::LoadSetting()

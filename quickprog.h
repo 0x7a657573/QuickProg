@@ -30,7 +30,7 @@ private slots:
     void handel_LoadSerialPort();
     void handel_StartAction();
     void handel_BrowseFile();
-
+    void handel_AboutMe();
 private:
     QComboBox *xPort;
     QComboBox *xBaud;

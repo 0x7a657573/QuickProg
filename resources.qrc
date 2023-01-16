@@ -12,5 +12,6 @@
         <file alias="wait">files/icons8-hourglass-30.png</file>
         <file alias="ok">files/icons8-ok-30.png</file>
         <file alias="error">files/icons8-high-priority-30.png</file>
+        <file alias="info">files/icons8-information-30.png</file>
     </qresource>
 </RCC>
