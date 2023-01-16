@@ -304,7 +304,7 @@ bool mtkprog::connect(uint32_t timeout)
             else
             {
                 emit wlog(tr("Boot Erorr!"));
-                emit wlog(QString("R: {%1}").arg(data.toHex(',')));
+                emit wlog(QString("R: {%1}").arg(QString(data.toHex(','))));
                 //return false;
             }
         }
@@ -414,7 +414,7 @@ bool mtkprog::sendFlashInfo(uint32_t offset)
         QByteArray check  = data.mid(0,4);
         if(check == QByteArray("\xFF\xFF\0\0"))
         {
-            emit wlog(QString("Invalid flash info: %1").arg(data.mid(0,4).toHex(',')));
+            emit wlog(QString("Invalid flash info: %1").arg(QString(data.mid(0,4).toHex(','))));
             return false;
         }
         offset += 36;
@@ -425,14 +425,14 @@ bool mtkprog::sendFlashInfo(uint32_t offset)
             r = cmd(NullP, 2);
             if(r.indexOf(QByteArray("\xA5\x69"))!=0 || r.size()!=2 )
             {
-                emit wlog(QString("Flashinfo END: %1").arg(r.toHex(',')));
+                emit wlog(QString("Flashinfo END: %1").arg(QString(r.toHex(','))));
                 return false;
             }
             return true;
         }
         if(r[0] != CONF)
         {
-            emit wlog(QString("Flashinfo ACK Fail: %1").arg(r.toHex(',')));
+            emit wlog(QString("Flashinfo ACK Fail: %1").arg(QString(r.toHex(','))));
             return false;
         }
     }
