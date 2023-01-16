@@ -55,7 +55,7 @@ void QuickProg::LoadToolBar(QHBoxLayout *lay)
     xBaud->setCurrentIndex(0); /*Set in 115200*/
 
     /*start btn*/
-    QPushButton *btnStart = new QPushButton(this);
+    btnStart = new QPushButton(this);
     btnStart->setAutoFillBackground(true);
     btnStart->setFixedSize(30,30);
     btnStart->setToolTip(tr("Start Programming"));
@@ -170,6 +170,7 @@ void QuickProg::SaveSetting()
 
 void QuickProg::LoadProgrammer(QVBoxLayout *parentlay)
 {
+    int id = 0;
     if(AppSetting.EnableUSBFilter)
     {
         for(int y=0;y<AppSetting.USB_row;y++)
@@ -178,7 +179,8 @@ void QuickProg::LoadProgrammer(QVBoxLayout *parentlay)
             for(int x=0;x<AppSetting.USB_col;x++)
             {
 
-                zprog *Tp = new zprog(this);
+                zprog *Tp = new zprog(id,this);
+                id++;
                 Tp->setEnabled(false);
                 programmers.append(Tp);
                 Row_lay->addWidget(Tp);
@@ -203,7 +205,8 @@ void QuickProg::LoadProgrammer(QVBoxLayout *parentlay)
     }
     else
     {
-        zprog *Tp = new zprog(this);
+        zprog *Tp = new zprog(id,this);
+        connect( Tp, &zprog::ended, this, &QuickProg::handel_TaskEndAction);
         programmers.append(Tp);
         parentlay->addWidget(Tp);
     }
@@ -232,23 +235,34 @@ void QuickProg::handel_BrowseFile()
     }
 }
 
+void QuickProg::handel_TaskEndAction(int id)
+{
+    programmerStatus.removeLast();
+    if(programmerStatus.isEmpty())
+    {
+        btnStart->setEnabled(true);
+    }
+}
+
+
 void QuickProg::handel_StartAction()
 {
-      Q_FOREACH(zprog *programmer, programmers)
+    btnStart->setEnabled(false);
+    Q_FOREACH(zprog *programmer, programmers)
+    {
+      if(programmer->isEnabled())
       {
-        if(programmer->isEnabled())
-        {
-            if(!AppSetting.EnableUSBFilter)
-                programmer->SetSerialPort(xPort->currentText());
-            programmer->SetBaud(xBaud->currentText().toInt());
-            programmer->SetPowerContorl(AppSetting.EnablePowerControl,
-                                        AppSetting.PowerControlPin==DTR_pin,
-                                        AppSetting.IsPowerControlInverse);
-            programmer->SetfirmwarePath(LPath->text());
-            programmer->start();
-        }
+          if(!AppSetting.EnableUSBFilter)
+            programmer->SetSerialPort(xPort->currentText());
+          programmer->SetBaud(xBaud->currentText().toInt());
+          programmer->SetPowerContorl(AppSetting.EnablePowerControl,
+                                      AppSetting.PowerControlPin==DTR_pin,
+                                      AppSetting.IsPowerControlInverse);
+          programmer->SetfirmwarePath(LPath->text());
+          programmer->start();
+          programmerStatus.append(true);
       }
-
+    }
 }
 
 

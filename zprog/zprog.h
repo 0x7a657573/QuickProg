@@ -14,7 +14,7 @@ class zprog : public QWidget
 {
     Q_OBJECT
 public:
-    explicit zprog(QWidget *parent = nullptr);
+    explicit zprog(int id=0,QWidget *parent = nullptr);
     void SetBaud(int baud);
     void SetSerialPort(const QString PortName);
     void SetfirmwarePath(const QString firmwarePath);
@@ -23,6 +23,7 @@ public:
 
 signals:
     void operate(const QString &);
+    void ended(int id);
 
 private slots:
     void setProgress(int value);
@@ -34,6 +35,7 @@ private:
     void DoPrograming(void);
 
 protected:
+    int xid;
     bool PowerContorl;
     bool IsPcDTR;
     bool IsPcNot;

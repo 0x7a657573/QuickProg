@@ -2,7 +2,7 @@
 #include <QDebug>
 #include "mtkprog.h"
 #include <QImage>
-zprog::zprog(QWidget *parent)
+zprog::zprog(int id,QWidget *parent)
     : QWidget{parent}
 {
     Layout = new QVBoxLayout(this);
@@ -23,6 +23,7 @@ zprog::zprog(QWidget *parent)
     Layout->addLayout(HLay);
     Layout->addWidget(log_view);
     PowerContorl = false;
+    xid = id;
 }
 
 void zprog::SetBaud(int baud)
@@ -99,11 +100,13 @@ void zprog::start(void)
 
 void zprog::finished(bool hasError)
 {
+
     /*check status*/
     if(!hasError)
         imgStatus->setPixmap(QPixmap::fromImage(QImage(":/Icon/ok")).scaled(16,16,Qt::KeepAspectRatio));
     else
         imgStatus->setPixmap(QPixmap::fromImage(QImage(":/Icon/error")).scaled(16,16,Qt::KeepAspectRatio));
+    emit ended(xid);
 }
 
 void zprog::writelog(QString str)

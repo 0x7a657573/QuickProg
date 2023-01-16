@@ -28,13 +28,16 @@ public:
 private slots:
     void handel_SettingAction();
     void handel_LoadSerialPort();
+    void handel_TaskEndAction(int id);
     void handel_StartAction();
     void handel_BrowseFile();
     void handel_AboutMe();
+
 private:
     QComboBox *xPort;
     QComboBox *xBaud;
     QLineEdit *LPath;
+    QPushButton *btnStart;
     Ui::QuickProg *ui;
     void LoadToolBar(QHBoxLayout *lay);
     void LoadSetting();
@@ -42,6 +45,7 @@ private:
     void LoadProgrammer(QVBoxLayout *parentlay);
 
 protected:
+    QList<bool> programmerStatus;
     QList<zprog*> programmers;
     AppSetting_t AppSetting;
 };
