@@ -180,6 +180,7 @@ void QuickProg::LoadProgrammer(QVBoxLayout *parentlay)
             {
 
                 zprog *Tp = new zprog(id,this);
+                connect( Tp, &zprog::ended, this, &QuickProg::handel_TaskEndAction);
                 id++;
                 Tp->setEnabled(false);
                 programmers.append(Tp);

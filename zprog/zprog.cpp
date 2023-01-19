@@ -100,7 +100,6 @@ void zprog::start(void)
 
 void zprog::finished(bool hasError)
 {
-
     /*check status*/
     if(!hasError)
         imgStatus->setPixmap(QPixmap::fromImage(QImage(":/Icon/ok")).scaled(16,16,Qt::KeepAspectRatio));
