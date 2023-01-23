@@ -36,6 +36,11 @@ settingdialog::settingdialog(AppSetting_t *setting,QWidget *parent) : QDialog(pa
     PowerControl_ck->setCheckState(app->IsPowerControlInverse ? Qt::CheckState::Checked:Qt::CheckState::Unchecked);
     PowerControl_main->addWidget(PowerControl_ck);
 
+    PowerControl_po = new QCheckBox(gBox);
+    PowerControl_po->setText(tr("Power Off After Programm Success"));
+    PowerControl_po->setCheckState(app->PowerOffAfterProgramm ? Qt::CheckState::Checked:Qt::CheckState::Unchecked);
+    PowerControl_main->addWidget(PowerControl_po);
+
     PowerControl_lay->addWidget(PowerControl_lb);
     PowerControl_lay->addWidget(PowerControl_cb);    
 
@@ -92,6 +97,7 @@ void settingdialog::handel_save()
 {
     app->EnablePowerControl = gBox->isChecked();
     app->IsPowerControlInverse = PowerControl_ck->isChecked();
+    app->PowerOffAfterProgramm = PowerControl_po->isChecked();
     app->PowerControlPin = PowerControl_cb->currentIndex()==0 ? DTR_pin:RTS_pin;
 
     bool ok;

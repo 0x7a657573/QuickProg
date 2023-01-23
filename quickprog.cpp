@@ -142,6 +142,7 @@ void QuickProg::LoadSetting()
     QSettings app("config.ini", QSettings::IniFormat);
     AppSetting.EnablePowerControl = app.value("PowerControl",false).toBool();
     AppSetting.IsPowerControlInverse = app.value("PowerControlInverse",false).toBool();
+    AppSetting.PowerOffAfterProgramm = app.value("PowerOffAfterProgramm",false).toBool();
     //qDebug() << app.value("PowerControlPin",0).toUInt(&OK);
     AppSetting.PowerControlPin = (app.value("PowerControlPin",false).toBool()) ? DTR_pin:RTS_pin;
 
@@ -157,6 +158,7 @@ void QuickProg::SaveSetting()
     QSettings app("config.ini", QSettings::IniFormat);
     app.setValue("PowerControl",QVariant::fromValue(AppSetting.EnablePowerControl));
     app.setValue("PowerControlInverse",QVariant::fromValue(AppSetting.IsPowerControlInverse));
+    app.setValue("PowerOffAfterProgramm",QVariant::fromValue(AppSetting.PowerOffAfterProgramm));
     bool pci = (AppSetting.PowerControlPin==DTR_pin);
     app.setValue("PowerControlPin",QVariant::fromValue(pci));
 

@@ -17,6 +17,7 @@ typedef struct
 {
     bool EnablePowerControl;
     bool IsPowerControlInverse;
+    bool PowerOffAfterProgramm;
     PowerPin_t PowerControlPin;
     bool EnableUSBFilter;
     uint16_t USB_VID;
@@ -43,6 +44,7 @@ protected:
     QGroupBox *uBox;
     QComboBox *PowerControl_cb;
     QCheckBox *PowerControl_ck;
+    QCheckBox *PowerControl_po;
     QLineEdit *eVID;
     QLineEdit *ePID;
     QLineEdit *eRow;
