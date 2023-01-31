@@ -18,7 +18,7 @@ public:
     void SetBaud(int baud);
     void SetSerialPort(const QString PortName);
     void SetfirmwarePath(const QString firmwarePath);
-    void SetPowerContorl(bool Enable,bool Is_DTR,bool Is_Not=false);
+    void SetPowerContorl(bool Enable,bool Is_DTR,bool Is_Not=false,bool OffOnSuccess = false);
     void start(void);
 
 signals:
@@ -37,6 +37,7 @@ private:
 protected:
     int xid;
     bool PowerContorl;
+    bool PowerOffOnSuccess;
     bool IsPcDTR;
     bool IsPcNot;
 

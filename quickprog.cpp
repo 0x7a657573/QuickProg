@@ -7,6 +7,9 @@
 #include <QFileDialog>
 #include <QProcess>
 #include <QMessageBox>
+#include <QStringList>
+#include <QRegularExpression>
+
 
 QuickProg::QuickProg(QWidget *parent)
     : QMainWindow(parent)
@@ -191,20 +194,34 @@ void QuickProg::LoadProgrammer(QVBoxLayout *parentlay)
             parentlay->addLayout(Row_lay);
         }
 
-        int index=0;
+        QStringList Ports;
         Q_FOREACH(QSerialPortInfo port, QSerialPortInfo::availablePorts())
         {
             if((AppSetting.USB_PID==0 || AppSetting.USB_PID==port.productIdentifier()) &&
               (AppSetting.USB_VID==0 || AppSetting.USB_VID==port.vendorIdentifier()))
             {
-                if(index<programmers.length())
-                {
-                    programmers[index]->setEnabled(true);
-                    programmers[index]->SetSerialPort(port.portName());
-                    index++;
-                }
+                Ports.append(port.portName());
             }
         }
+
+        /*sort Port Name*/
+        std::sort(Ports.begin(),Ports.end(),[](QString a,QString b)
+        {
+            QRegularExpression rx("[^0-9]+");
+            return a.split(rx,Qt::SkipEmptyParts)[0].toInt() < b.split(rx,Qt::SkipEmptyParts)[0].toInt();
+        });
+
+        int index=0;
+        Q_FOREACH(QString port, Ports)
+        {
+            if(index<programmers.length())
+            {
+                programmers[index]->setEnabled(true);
+                programmers[index]->SetSerialPort(port);
+                index++;
+            }
+        }
+
     }
     else
     {
@@ -260,7 +277,8 @@ void QuickProg::handel_StartAction()
           programmer->SetBaud(xBaud->currentText().toInt());
           programmer->SetPowerContorl(AppSetting.EnablePowerControl,
                                       AppSetting.PowerControlPin==DTR_pin,
-                                      AppSetting.IsPowerControlInverse);
+                                      AppSetting.IsPowerControlInverse,
+                                      AppSetting.PowerOffAfterProgramm);
           programmer->SetfirmwarePath(LPath->text());
           programmer->start();
           programmerStatus.append(true);

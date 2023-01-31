@@ -11,7 +11,7 @@ DA_t MT6261_DA[] =
     {.offset = 0x00718, .size=0x1e5c8, .address=0x10020000}
 };
 
-mtkprog::mtkprog(QString PortName,QString firmware, bool PwCo,bool PwIsDTR,bool PwInverse)
+mtkprog::mtkprog(QString PortName,QString firmware, bool PwCo,bool PwIsDTR,bool PwInverse,bool PwOffOnSuccess)
 {
     xFirmware_Path = firmware;
     xPort_PortName = PortName;
@@ -23,6 +23,7 @@ mtkprog::mtkprog(QString PortName,QString firmware, bool PwCo,bool PwIsDTR,bool 
     mtk_PwIsDTR = PwIsDTR;
     mtk_PwInverse = PwInverse;
     status = mtk_stop;
+    mtk_PwOffOnSuccess = PwOffOnSuccess;
 }
 
 void mtkprog::setBaud(mtkprog::mtk_baud baud)
@@ -91,6 +92,13 @@ void mtkprog::die(bool HasError)
 {
     if(xPort!=nullptr)
     {
+        if(HasError==false && mtk_PwOffOnSuccess==true)
+        {
+            PowerControl(false);
+        }
+        else
+            PowerControl(true);
+
         xPort->close();
         delete(xPort);
     }
@@ -908,8 +916,6 @@ void mtkprog::Start(void)
     }
 
     xPort = new QSerialPort(xPort_PortName);
-
-
     if(!open())
     {
         emit wlog(QString("Can not open Port {%1}").arg(xPort_PortName));

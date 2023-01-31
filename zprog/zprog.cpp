@@ -31,11 +31,12 @@ void zprog::SetBaud(int baud)
     xBaud = baud;
 }
 
-void zprog::SetPowerContorl(bool Enable,bool Is_DTR,bool Is_Not)
+void zprog::SetPowerContorl(bool Enable,bool Is_DTR,bool Is_Not,bool OffOnSuccess)
 {
     PowerContorl = Enable;
     IsPcDTR = Is_DTR;
     IsPcNot = Is_Not;
+    PowerOffOnSuccess = OffOnSuccess;
 }
 
 void zprog::SetSerialPort(const QString PortName)
@@ -60,7 +61,7 @@ void zprog::start(void)
     imgStatus->setPixmap(QPixmap::fromImage(QImage(":/Icon/wait")).scaled(16,16,Qt::KeepAspectRatio));
 
     thread = new QThread();
-    mtkworker = new mtkprog(xPortName,xFirmwarePath,PowerContorl,IsPcDTR,IsPcNot);
+    mtkworker = new mtkprog(xPortName,xFirmwarePath,PowerContorl,IsPcDTR,IsPcNot,PowerOffOnSuccess);
 
     switch (xBaud) {
     case 115200:
@@ -92,10 +93,6 @@ void zprog::start(void)
     connect( mtkworker, &mtkprog::finished, mtkworker, &mtkprog::deleteLater);
     connect( thread, &QThread::finished, thread, &QThread::deleteLater);
     thread->start();
-
-
-
-
 }
 
 void zprog::finished(bool hasError)
